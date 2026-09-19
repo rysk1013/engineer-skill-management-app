@@ -1,0 +1,23 @@
+project_name: "Engineer Skill Management App"
+default_status: "To Do"
+statuses: ["To Do", "In Progress", "Done"]
+labels: []
+date_format: yyyy-mm-dd
+max_column_width: 20
+auto_open_browser: true
+default_port: 6420
+remote_operations: false
+auto_commit: false
+filesystem_only: true
+bypass_git_hooks: false
+check_active_branches: false
+active_branch_days: 30
+task_prefix: "TASK"
+definition_of_done:
+  - Acceptance Criteria are satisfied
+  - Required tests pass
+  - Required lint and static analysis pass
+  - Documentation is updated if needed
+  - No temporary or debug code remains
+  - Self review is completed
+  - Final Summary is completed
