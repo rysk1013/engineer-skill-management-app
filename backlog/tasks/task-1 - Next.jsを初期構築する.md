@@ -1,10 +1,10 @@
 ---
 id: TASK-1
 title: Next.jsを初期構築する
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-09-20 08:28'
-updated_date: '2026-09-22 15:50'
+updated_date: '2026-09-22 15:52'
 labels:
   - phase-0
   - frontend
