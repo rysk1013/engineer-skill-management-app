@@ -1,9 +1,10 @@
 ---
 id: TASK-2
 title: Laravelを初期構築する
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-09-20 08:28'
+updated_date: '2026-09-22 16:11'
 labels:
   - phase-0
   - backend
