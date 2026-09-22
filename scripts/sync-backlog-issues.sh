@@ -91,28 +91,36 @@ collect_changed_tasks() {
 
   diff_base="$(resolve_diff_base)"
 
-  while IFS=$'\t' read -r status old_file new_file; do
+  while IFS= read -r -d '' status; do
     case "$status" in
       A | M)
+        IFS= read -r -d '' old_file
+
         printf '%s\0' "$old_file"
         ;;
 
       D)
+        IFS= read -r -d '' old_file
+
         log_warn "Deleted task file detected; corresponding GitHub Issue will not be modified: ${old_file}"
         ;;
 
       R*)
+        IFS= read -r -d '' old_file
+        IFS= read -r -d '' new_file
+
         printf '%s\0' "$new_file"
         ;;
 
       *)
-        log_warn "Unsupported Git change status '${status}' for: ${old_file}"
+        die "Unsupported Git change status: ${status}"
         ;;
     esac
   done < <(
     git diff \
       --name-status \
       --find-renames \
+      -z \
       "$diff_base" \
       "$AFTER_SHA" \
       -- "$TASKS_DIR"
