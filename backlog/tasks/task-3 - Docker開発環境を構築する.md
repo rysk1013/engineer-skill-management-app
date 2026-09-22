@@ -1,9 +1,10 @@
 ---
 id: TASK-3
 title: Docker開発環境を構築する
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-09-20 08:28'
+updated_date: '2026-09-22 23:20'
 labels:
   - phase-0
   - docker
