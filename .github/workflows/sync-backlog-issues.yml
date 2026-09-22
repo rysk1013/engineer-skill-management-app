@@ -1,0 +1,74 @@
+name: Sync Backlog Issues
+
+on:
+  push:
+    paths:
+      - "backlog/**"
+      - "scripts/sync-backlog-issues.sh"
+      - ".github/workflows/sync-backlog-issues.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: backlog-issues-sync
+  queue: max
+
+jobs:
+  sync-changed:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install yq
+        env:
+          YQ_VERSION: v4.53.6
+        run: |
+          sudo wget \
+            -qO /usr/local/bin/yq \
+            "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Sync changed Backlog tasks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          SYNC_MODE: changed
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: ./scripts/sync-backlog-issues.sh
+
+  sync-full:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v5
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Install yq
+        env:
+          YQ_VERSION: v4.53.6
+        run: |
+          sudo wget \
+            -qO /usr/local/bin/yq \
+            "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Sync all Backlog tasks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          SYNC_MODE: full
+        run: ./scripts/sync-backlog-issues.sh

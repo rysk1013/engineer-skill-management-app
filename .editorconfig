@@ -17,6 +17,9 @@ trim_trailing_whitespace = true
 # Frontend / Configuration
 # =============================================================================
 
+[*.sh]
+indent_size = 2
+
 [*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,yml,yaml}]
 indent_size = 2
 
