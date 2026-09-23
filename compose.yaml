@@ -8,6 +8,8 @@ services:
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
+    networks:
+      - frontend
     command: npm run dev -- --hostname 0.0.0.0
 
   backend:
@@ -19,6 +21,19 @@ services:
     volumes:
       - ./backend:/app
       - backend_vendor:/app/vendor
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: engineer_skill_management
+      DB_USERNAME: app
+      DB_PASSWORD: password
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      db:
+        condition: service_healthy
     command: php artisan serve --host=0.0.0.0 --port=8000
 
   db:
@@ -31,6 +46,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
     healthcheck:
       test:
         - CMD-SHELL
@@ -44,3 +61,7 @@ volumes:
   frontend_node_modules:
   backend_vendor:
   postgres_data:
+
+networks:
+  frontend:
+  backend:
