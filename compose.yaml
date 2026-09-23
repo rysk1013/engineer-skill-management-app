@@ -10,5 +10,17 @@ services:
       - frontend_node_modules:/app/node_modules
     command: npm run dev -- --hostname 0.0.0.0
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - backend_vendor:/app/vendor
+    command: php artisan serve --host=0.0.0.0 --port=8000
+
 volumes:
   frontend_node_modules:
+  backend_vendor:
