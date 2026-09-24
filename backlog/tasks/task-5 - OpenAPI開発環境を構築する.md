@@ -4,7 +4,7 @@ title: OpenAPI開発環境を構築する
 status: Done
 assignee: []
 created_date: '2026-09-23 11:29'
-updated_date: '2026-09-24 12:49'
+updated_date: '2026-09-24 13:01'
 labels:
   - phase-0
   - openapi
@@ -57,13 +57,13 @@ OpenAPI定義 → Lint → Bundle → TypeScript型生成 → Backend / BFF実�
 - [x] #3 Required lint and static analysis pass
 - [x] #4 Documentation is updated if needed
 - [x] #5 No temporary or debug code remains
-- [ ] #6 Self review is completed
-- [ ] #7 Final Summary is completed
-- [ ] #8 Acceptance Criteriaをすべて満たしている
-- [ ] #9 Lint → Bundle → TypeScript型生成の一連の処理が正常に完了する
-- [ ] #10 必要な設定ファイルがGit管理されている
-- [ ] #11 必要な開発ドキュメントが更新されている
-- [ ] #12 ローカルのDocker開発環境で動作確認が完了している
+- [x] #6 Self review is completed
+- [x] #7 Final Summary is completed
+- [x] #8 Acceptance Criteriaをすべて満たしている
+- [x] #9 Lint → Bundle → TypeScript型生成の一連の処理が正常に完了する
+- [x] #10 必要な設定ファイルがGit管理されている
+- [x] #11 必要な開発ドキュメントが更新されている
+- [x] #12 ローカルのDocker開発環境で動作確認が完了している
 <!-- DOD:END -->
 
 ## Implementation Plan
