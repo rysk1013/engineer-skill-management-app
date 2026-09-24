@@ -1,0 +1,31 @@
+openapi: 3.1.0
+
+info:
+  title: Engineer Skill Management API
+  version: 0.1.0
+  description: |
+    API contract between the Next.js BFF and Laravel Backend API.
+
+servers:
+  - url: http://backend:8000
+    description: Docker development environment
+
+paths:
+  /health:
+    get:
+      security: []
+      operationId: getHealth
+      summary: Health check
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    example: ok

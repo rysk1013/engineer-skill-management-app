@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "redocly lint",
+    "bundle": "redocly bundle engineer-skill-management --output dist/openapi.yaml",
+    "generate:types": "openapi-typescript",
+    "generate": "npm run bundle && npm run generate:types",
+    "check": "npm run lint && npm run generate"
   },
   "keywords": [],
   "author": "",
