@@ -1,0 +1,21 @@
+{
+  "name": "openapi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "redocly lint",
+    "bundle": "redocly bundle engineer-skill-management --output dist/openapi.yaml",
+    "generate:types": "openapi-typescript",
+    "generate": "npm run bundle && npm run generate:types",
+    "check": "npm run lint && npm run generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@redocly/cli": "^2.54.2",
+    "openapi-typescript": "^7.13.0"
+  }
+}

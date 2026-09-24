@@ -1,0 +1,11 @@
+apis:
+  engineer-skill-management:
+    root: ./openapi.yaml
+    x-openapi-ts:
+      output: ../frontend/src/generated/api/schema.d.ts
+
+extends:
+  - recommended
+
+rules:
+  info-license: off

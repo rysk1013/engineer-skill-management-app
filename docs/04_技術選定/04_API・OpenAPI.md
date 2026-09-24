@@ -139,13 +139,12 @@ OpenAPI Specification の Lint と Bundle に Redocly CLI を利用する。
 基本フロー：
 
 ```text
-openapi/
-   ↓
-Redocly Lint
-   ↓
-Redocly Bundle
-   ↓
-dist/openapi.yaml
+openapi/openapi.yaml
+   ├── Redocly Lint
+   │
+   └── Redocly Bundle
+          ↓
+      dist/openapi.yaml
 ```
 
 ---
@@ -190,32 +189,35 @@ Redocly CLI
 
 ## 8. OpenAPI File 構成
 
-OpenAPI Specification は複数 File に分割して管理する。
+OpenAPI Specification はリポジトリルートの `openapi/` で管理する。
 
-概念例：
+基本構成：
 
 ```text
 openapi/
 ├── openapi.yaml
+├── redocly.yaml
+├── package.json
+├── package-lock.json
+├── Dockerfile
 │
 ├── paths/
-│   ├── auth.yaml
-│   ├── employees.yaml
-│   ├── employee-skills.yaml
-│   ├── skills.yaml
-│   └── skill-categories.yaml
 │
-├── schemas/
-│   ├── auth.yaml
-│   ├── employee.yaml
-│   ├── employee-skill.yaml
-│   ├── skill.yaml
-│   ├── skill-category.yaml
-│   └── error.yaml
+├── components/
+│   ├── schemas/
+│   ├── parameters/
+│   ├── responses/
+│   └── security-schemes/
 │
 └── dist/
     └── openapi.yaml
 ```
+
+`openapi/openapi.yaml` を OpenAPI Specification のエントリーポイントとする。
+
+API Contract の Source of Truth は `openapi/openapi.yaml` と、そこから `$ref` される File 群とする。
+
+`paths/` は Endpoint 定義、`components/` は複数 API から再利用する Schema、Parameter、Response、Security Scheme 等を管理する。
 
 具体的な File 分割単位は API 設計の規模に応じて調整する。
 
@@ -225,7 +227,7 @@ openapi/
 
 ## 9. Bundle
 
-開発時は複数 File に分割して管理し、Tool 連携用に単一 File へ Bundle する。
+開発時は必要に応じて OpenAPI Specification を複数 File に分割し、Tool 連携や単一 File が必要な用途向けに Bundle を生成する。
 
 Input：
 
@@ -239,14 +241,11 @@ Output：
 openapi/dist/openapi.yaml
 ```
 
-Bundle File は以下で利用する。
+`dist/openapi.yaml` は Redocly CLI による生成物として扱う。
 
-- TypeScript 型生成
-- CI Validation
-- API Documentation
-- その他 OpenAPI Tool
+`openapi/dist/` は Git 管理しない。
 
-`dist/openapi.yaml` は生成物として扱う。
+Bundle File を直接編集しない。
 
 ---
 
@@ -254,16 +253,28 @@ Bundle File は以下で利用する。
 
 Next.js 向け TypeScript 型生成には `openapi-typescript` を採用する。
 
-基本フロー：
+TypeScript 型は OpenAPI の Source of Truth から生成する。
 
 ```text
-OpenAPI
-   ↓
-Redocly Bundle
+openapi/openapi.yaml
    ↓
 openapi-typescript
    ↓
-TypeScript Types
+frontend/src/generated/api/schema.d.ts
+```
+
+Bundle File を TypeScript 型生成の必須 Input とはしない。
+
+Bundle と TypeScript 型は、それぞれ OpenAPI Specification から生成される独立した Artifact として扱う。
+
+```text
+                    ┌── Redocly Bundle
+                    │       ↓
+openapi.yaml ───────┤   dist/openapi.yaml
+                    │
+                    └── openapi-typescript
+                            ↓
+                    frontend/src/generated/api/schema.d.ts
 ```
 
 生成対象には以下を含む。
@@ -357,12 +368,14 @@ Frontend 独自の View Model や Form Model が必要な場合は、API Contrac
 
 生成された File は直接編集しない。
 
-例：
+TypeScript 型の生成先：
 
 ```text
 frontend/
-└── generated/
-    └── api-types.ts
+└── src/
+    └── generated/
+        └── api/
+            └── schema.d.ts
 ```
 
 変更フロー：
@@ -372,12 +385,26 @@ OpenAPI Change
    ↓
 Lint
    ↓
-Bundle
-   ↓
-Type Generation
+Bundle / Type Generation
 ```
 
 Generated File を修正する必要がある場合は、生成元である OpenAPI を変更する。
+
+### Git 管理
+
+以下の方針とする。
+
+```text
+openapi/dist/
+→ Git 管理しない
+
+frontend/src/generated/api/schema.d.ts
+→ Git 管理する
+```
+
+Bundle は中間生成物として必要時に再生成する。
+
+TypeScript Generated Type は Frontend が直接利用し、OpenAPI 変更時の型差分を Review できるよう Git 管理する。
 
 ---
 
@@ -564,6 +591,10 @@ API の互換性を壊す変更は OpenAPI Review で明示的に確認する。
 
 OpenAPI 変更時は Lint を必須とする。
 
+Redocly CLI の `recommended` Rule Set を基本として利用する。
+
+Project の性質に適合しない Rule は理由を明確にしたうえで設定を調整する。
+
 確認対象：
 
 - OpenAPI Syntax
@@ -582,7 +613,48 @@ OpenAPI 変更時は Lint を必須とする。
 
 ---
 
-## 24. CI
+## 24. OpenAPI 開発コマンド
+
+OpenAPI Tooling は `openapi/package.json` で管理する。
+
+基本コマンド：
+
+```bash
+npm run lint
+npm run bundle
+npm run generate:types
+npm run generate
+npm run check
+```
+
+責務：
+
+```text
+npm run lint
+└── OpenAPI Lint
+
+npm run bundle
+└── OpenAPI Bundle
+
+npm run generate:types
+└── TypeScript Type Generation
+
+npm run generate
+├── Bundle
+└── TypeScript Type Generation
+
+npm run check
+├── Lint
+└── Generate
+    ├── Bundle
+    └── TypeScript Type Generation
+```
+
+開発者および CI が OpenAPI 全体を検証する際は、原則として `npm run check` を利用する。
+
+---
+
+## 25. CI
 
 Pull Request 時に OpenAPI 関連 Check を実行する。
 
@@ -602,7 +674,7 @@ OpenAPI が不正な場合は CI を Failure とする。
 
 ---
 
-## 25. Generated File の差分確認
+## 26. Generated File の差分確認
 
 OpenAPI を変更したにもかかわらず Generated Type を更新し忘れる状態を防止する。
 
@@ -614,13 +686,15 @@ Type Generation
 git diff --exit-code
 ```
 
-CI 内で生成し、Repository 内の Generated File と差分がある場合は Failure とする方式を採用候補とする。
+CI 内で TypeScript 型を再生成し、Repository 内の Generated File と差分がある場合は Failure とする。
 
-実際に Generated File を Git 管理するかどうかは Project Setup 時に最終決定する。
+`frontend/src/generated/api/schema.d.ts` は Git 管理対象とする。
+
+`openapi/dist/` は Git 管理対象としないため、Bundle の差分確認対象とはしない。
 
 ---
 
-## 26. Contract 検証
+## 27. Contract 検証
 
 MVP では専用 Contract Testing Tool を追加しない。
 
@@ -637,7 +711,7 @@ MVP では専用 Contract Testing Tool を追加しない。
 
 ---
 
-## 27. Laravel と OpenAPI の整合性
+## 28. Laravel と OpenAPI の整合性
 
 Laravel Feature Test では主に以下を確認する。
 
@@ -657,7 +731,7 @@ MVP では Test と Review を組み合わせて Contract Drift を防止する�
 
 ---
 
-## 28. Frontend と OpenAPI の整合性
+## 29. Frontend と OpenAPI の整合性
 
 Frontend は OpenAPI から生成した TypeScript Type を利用する。
 
@@ -677,7 +751,7 @@ API Contract 変更時には Type Error を利用して影響箇所を発見で�
 
 ---
 
-## 29. API Documentation
+## 30. API Documentation
 
 OpenAPI 自体を API Specification の Source of Truth とする。
 
@@ -689,49 +763,44 @@ Documentation を実装から手書きで二重管理しない。
 
 ---
 
-## 30. Docker
+## 31. Docker
 
-OpenAPI Tool は Local Development Environment から再現可能に実行できるようにする。
+OpenAPI Tooling は専用の `openapi` Container で実行する。
 
-基本的には Node.js Toolchain を持つ Frontend Container から実行する。
+構成：
 
-例：
+```text
+Docker Compose
+├── frontend
+│   └── Next.js Frontend / BFF
+├── backend
+│   └── Laravel Backend API
+├── db
+│   └── PostgreSQL
+└── openapi
+    ├── Redocly CLI
+    └── openapi-typescript
+```
+
+OpenAPI Container は開発 Server として常駐させず、必要な処理を実行する一時 Container として利用する。
+
+OpenAPI 全体の検証：
 
 ```bash
-docker compose exec frontend npm run openapi:lint
-
-docker compose exec frontend npm run openapi:bundle
-
-docker compose exec frontend npm run openapi:types
+docker compose run --rm openapi npm run check
 ```
 
-具体的な Script 名は Project Setup 時に決定する。
+個別実行：
 
-OpenAPI Specification 自体は Frontend 固有 Artifact ではなく、Frontend / Backend 共有の Contract として扱う。
-
----
-
-## 31. package.json
-
-想定 Script：
-
-```text
-openapi:lint
-openapi:bundle
-openapi:types
-openapi:check
+```bash
+docker compose run --rm openapi npm run lint
+docker compose run --rm openapi npm run bundle
+docker compose run --rm openapi npm run generate:types
 ```
 
-基本：
+OpenAPI Specification は Frontend 固有 Artifact ではなく、Frontend / Backend 共有の Contract として扱う。
 
-```text
-openapi:check
-├── lint
-├── bundle
-└── types
-```
-
-CI では `openapi:check` 相当の処理を実行する。
+OpenAPI Tooling の Node.js Dependency は `openapi/package.json` で管理し、Frontend の Dependency とは分離する。
 
 ---
 
@@ -758,8 +827,6 @@ Laravel Implementation から OpenAPI を生成する方式は採用しない。
 
 OpenAPI First とする。
 
----
-
 ### Spectral
 
 MVP では採用しない。
@@ -768,15 +835,11 @@ Redocly CLI で Lint / Bundle を統一する。
 
 高度な API Governance が必要になった場合に再検討する。
 
----
-
 ### OpenAPI Generator
 
 MVP では採用しない。
 
 API Client 全体を自動生成せず、TypeScript 型のみ生成する。
-
----
 
 ### 専用 Contract Testing Tool
 
@@ -784,15 +847,11 @@ MVP では採用しない。
 
 既存 Test で不足が確認された場合に追加する。
 
----
-
 ### Browser → Laravel Direct Access
 
 Browser から Laravel API を直接利用する構成を基本としない。
 
 Next.js BFF を経由する。
-
----
 
 ### Laravel から OpenAPI を自動生成
 
@@ -906,6 +965,12 @@ OpenAPI
 
 OpenAPI を Source of Truth とする。
 
+### OpenAPI 管理
+
+OpenAPI Specification はリポジトリルートの `openapi/` で管理する。
+
+`openapi/openapi.yaml` とそこから参照される File 群を Source of Truth とする。
+
 ### OpenAPI Lint
 
 **Redocly CLI を採用する。**
@@ -914,15 +979,37 @@ OpenAPI を Source of Truth とする。
 
 **Redocly CLI を採用する。**
 
+Bundle は `openapi/dist/openapi.yaml` へ生成し、Git 管理しない。
+
 ### TypeScript Type Generation
 
 **openapi-typescript を採用する。**
+
+生成先：
+
+```text
+frontend/src/generated/api/schema.d.ts
+```
+
+Generated Type は Git 管理する。
 
 ### API Client
 
 **Next.js BFF 側で薄く実装する。**
 
 API Client 全体の自動生成は行わない。
+
+### OpenAPI Tooling
+
+OpenAPI Tooling の Dependency は `openapi/package.json` で管理する。
+
+Docker では専用の `openapi` Containerを利用する。
+
+基本的な検証コマンド：
+
+```bash
+docker compose run --rm openapi npm run check
+```
 
 ### Contract Validation
 
@@ -948,16 +1035,13 @@ E2E Test
 
 ```text
 OpenAPI
-   ↓
-Redocly Lint
-   ↓
-Redocly Bundle
-   ↓
-openapi-typescript
-   ↓
-Generated Type
-   ↓
-Difference Check
+   ├── Redocly Lint
+   ├── Redocly Bundle
+   └── openapi-typescript
+           ↓
+      Generated Type
+           ↓
+      Difference Check
 ```
 
 ### 採用しないもの
