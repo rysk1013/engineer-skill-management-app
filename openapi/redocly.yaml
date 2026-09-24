@@ -1,0 +1,6 @@
+apis:
+  engineer-skill-management:
+    root: ./openapi.yaml
+
+extends:
+  - recommended
