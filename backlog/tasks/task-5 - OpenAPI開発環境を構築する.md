@@ -1,10 +1,10 @@
 ---
 id: TASK-5
 title: OpenAPI開発環境を構築する
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-09-23 11:29'
-updated_date: '2026-09-23 11:38'
+updated_date: '2026-09-24 12:49'
 labels:
   - phase-0
   - openapi
@@ -38,25 +38,25 @@ OpenAPI定義 → Lint → Bundle → TypeScript型生成 → Backend / BFF実�
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 OpenAPI仕様を配置するディレクトリ構成が決定している
-- [ ] #2 Redocly CLIが導入されている
-- [ ] #3 openapi-typescriptが導入されている
-- [ ] #4 動作確認用の最小構成OpenAPI仕様が存在する
-- [ ] #5 OpenAPI仕様に対してLintを実行できる
-- [ ] #6 OpenAPI仕様からBundleを生成できる
-- [ ] #7 BundleしたOpenAPI仕様からTypeScript型を生成できる
-- [ ] #8 OpenAPI関連コマンドを統一されたコマンドから実行できる
-- [ ] #9 Dockerベースの開発環境からLint・Bundle・型生成を実行できる
-- [ ] #10 OpenAPI関連の生成物についてGit管理方針が決定している
+- [x] #1 OpenAPI仕様を配置するディレクトリ構成が決定している
+- [x] #2 Redocly CLIが導入されている
+- [x] #3 openapi-typescriptが導入されている
+- [x] #4 動作確認用の最小構成OpenAPI仕様が存在する
+- [x] #5 OpenAPI仕様に対してLintを実行できる
+- [x] #6 OpenAPI仕様からBundleを生成できる
+- [x] #7 BundleしたOpenAPI仕様からTypeScript型を生成できる
+- [x] #8 OpenAPI関連コマンドを統一されたコマンドから実行できる
+- [x] #9 Dockerベースの開発環境からLint・Bundle・型生成を実行できる
+- [x] #10 OpenAPI関連の生成物についてGit管理方針が決定している
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Acceptance Criteria are satisfied
-- [ ] #2 Required tests pass
-- [ ] #3 Required lint and static analysis pass
-- [ ] #4 Documentation is updated if needed
-- [ ] #5 No temporary or debug code remains
+- [x] #1 Acceptance Criteria are satisfied
+- [x] #2 Required tests pass
+- [x] #3 Required lint and static analysis pass
+- [x] #4 Documentation is updated if needed
+- [x] #5 No temporary or debug code remains
 - [ ] #6 Self review is completed
 - [ ] #7 Final Summary is completed
 - [ ] #8 Acceptance Criteriaをすべて満たしている
@@ -67,6 +67,7 @@ OpenAPI定義 → Lint → Bundle → TypeScript型生成 → Backend / BFF実�
 <!-- DOD:END -->
 
 ## Implementation Plan
+
 <!-- SECTION:PLAN:BEGIN -->
 1. OpenAPI関連ファイルのディレクトリ構成を決定する
 2. Redocly CLIを導入する
@@ -83,6 +84,7 @@ OpenAPI定義 → Lint → Bundle → TypeScript型生成 → Backend / BFF実�
 <!-- SECTION:PLAN:END -->
 
 ## Final Summary
+
 <!-- SECTION:FINAL_SUMMARY:BEGIN -->
-未完了
+OpenAPI First開発環境を構築した。Redocly CLIによるLint・Bundle、openapi-typescriptによるTypeScript型生成、専用OpenAPI Docker Containerからの実行環境を整備した。openapi/distはGit管理対象外、frontend/src/generated/api/schema.d.tsはGit管理対象とした。関連ドキュメントも更新した。
 <!-- SECTION:FINAL_SUMMARY:END -->
