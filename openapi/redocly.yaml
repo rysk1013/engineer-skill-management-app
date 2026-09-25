@@ -2,7 +2,7 @@ apis:
   engineer-skill-management:
     root: ./openapi.yaml
     x-openapi-ts:
-      output: ../frontend/src/generated/api/schema.d.ts
+      output: ../frontend/src/lib/api/generated/schema.d.ts
 
 extends:
   - recommended
