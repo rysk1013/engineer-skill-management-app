@@ -7,8 +7,8 @@ info:
     API contract between the Next.js BFF and Laravel Backend API.
 
 servers:
-  - url: http://backend:8000
-    description: Docker development environment
+  - url: /api/v1
+    description: Backend API
 
 paths:
   /health:
