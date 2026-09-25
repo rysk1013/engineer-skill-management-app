@@ -260,7 +260,7 @@ openapi/openapi.yaml
    ↓
 openapi-typescript
    ↓
-frontend/src/generated/api/schema.d.ts
+frontend/src/lib/api/generated/schema.d.ts
 ```
 
 Bundle File を TypeScript 型生成の必須 Input とはしない。
@@ -274,7 +274,7 @@ openapi.yaml ───────┤   dist/openapi.yaml
                     │
                     └── openapi-typescript
                             ↓
-                    frontend/src/generated/api/schema.d.ts
+                    frontend/src/lib/api/generated/schema.d.ts
 ```
 
 生成対象には以下を含む。
@@ -373,9 +373,10 @@ TypeScript 型の生成先：
 ```text
 frontend/
 └── src/
-    └── generated/
+    └── lib/
         └── api/
-            └── schema.d.ts
+            └── generated/
+                └── schema.d.ts
 ```
 
 変更フロー：
@@ -398,7 +399,7 @@ Generated File を修正する必要がある場合は、生成元である Open
 openapi/dist/
 → Git 管理しない
 
-frontend/src/generated/api/schema.d.ts
+frontend/src/lib/api/generated/schema.d.ts
 → Git 管理する
 ```
 
@@ -688,7 +689,7 @@ git diff --exit-code
 
 CI 内で TypeScript 型を再生成し、Repository 内の Generated File と差分がある場合は Failure とする。
 
-`frontend/src/generated/api/schema.d.ts` は Git 管理対象とする。
+`frontend/src/lib/api/generated/schema.d.ts` は Git 管理対象とする。
 
 `openapi/dist/` は Git 管理対象としないため、Bundle の差分確認対象とはしない。
 
@@ -988,7 +989,7 @@ Bundle は `openapi/dist/openapi.yaml` へ生成し、Git 管理しない。
 生成先：
 
 ```text
-frontend/src/generated/api/schema.d.ts
+frontend/src/lib/api/generated/schema.d.ts
 ```
 
 Generated Type は Git 管理する。
@@ -1038,9 +1039,9 @@ OpenAPI
    ├── Redocly Lint
    ├── Redocly Bundle
    └── openapi-typescript
-           ↓
+          ↓
       Generated Type
-           ↓
+          ↓
       Difference Check
 ```
 
