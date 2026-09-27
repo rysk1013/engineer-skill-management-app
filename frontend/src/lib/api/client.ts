@@ -8,7 +8,8 @@ if (!backendApiUrl) {
   throw new Error("BACKEND_API_URL is not configured");
 }
 
-type HealthResponse = paths["/health"]["get"]["responses"][200]["content"]["application/json"];
+type HealthResponse =
+  paths["/health"]["get"]["responses"][200]["content"]["application/json"];
 
 export async function getHealth(): Promise<HealthResponse> {
   const response = await fetch(`${backendApiUrl}/health`, {

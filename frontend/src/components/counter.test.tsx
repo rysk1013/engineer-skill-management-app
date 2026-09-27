@@ -15,5 +15,5 @@ describe("Counter", () => {
     await user.click(screen.getByRole("button", { name: "Increment" }));
 
     expect(screen.getByText("Count: 1")).toBeInTheDocument();
-  })
+  });
 });
