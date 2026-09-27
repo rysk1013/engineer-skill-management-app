@@ -4,6 +4,7 @@ title: Phase 0の統合確認を行う
 status: To Do
 assignee: []
 created_date: '2026-09-27 08:41'
+updated_date: '2026-09-27 12:10'
 labels:
   - phase-0
   - infrastructure
@@ -19,6 +20,7 @@ dependencies:
   - TASK-8
   - TASK-9
   - TASK-10
+  - TASK-12
 references:
   - docs/05_MVP実装計画/
   - docs/06_開発・運用/01_開発環境.md

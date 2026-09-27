@@ -1,10 +1,10 @@
 ---
 id: TASK-12
 title: FrontendにPrettierを導入する
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-09-27 08:50'
-updated_date: '2026-09-27 08:52'
+updated_date: '2026-09-27 12:03'
 labels:
   - phase-0
   - frontend
@@ -38,34 +38,34 @@ CIへの組み込みはTASK-10で行う。
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Frontend/BFFにPrettierがDevelopment Dependencyとして導入されている
-- [ ] #2 PrettierのConfigurationがGit管理されている
-- [ ] #3 Semicolonが有効になるようPrettierが設定されている
-- [ ] #4 PrettierとESLintの責務が分離されている
-- [ ] #5 Frontend/BFFのFormatを実行するProject Commandが定義されている
-- [ ] #6 Frontend/BFFのFormat Checkを実行するProject Commandが定義されている
-- [ ] #7 既存のFrontend/BFFコードがPrettierによってFormatされている
-- [ ] #8 Docker開発環境上でFormat Checkを正常に実行できる
-- [ ] #9 Prettier導入後もLint / Type Check / Test / Buildが成功する
+- [x] #1 Frontend/BFFにPrettierがDevelopment Dependencyとして導入されている
+- [x] #2 PrettierのConfigurationがGit管理されている
+- [x] #3 Semicolonが有効になるようPrettierが設定されている
+- [x] #4 PrettierとESLintの責務が分離されている
+- [x] #5 Frontend/BFFのFormatを実行するProject Commandが定義されている
+- [x] #6 Frontend/BFFのFormat Checkを実行するProject Commandが定義されている
+- [x] #7 既存のFrontend/BFFコードがPrettierによってFormatされている
+- [x] #8 Docker開発環境上でFormat Checkを正常に実行できる
+- [x] #9 Prettier導入後もLint / Type Check / Test / Buildが成功する
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Acceptance Criteria are satisfied
-- [ ] #2 Required tests pass
-- [ ] #3 Required lint and static analysis pass
-- [ ] #4 Documentation is updated if needed
-- [ ] #5 No temporary or debug code remains
-- [ ] #6 Self review is completed
-- [ ] #7 Final Summary is completed
-- [ ] #8 Acceptance Criteriaをすべて満たしている
-- [ ] #9 PrettierによるFormat Checkが成功する
-- [ ] #10 ESLintが成功する
-- [ ] #11 TypeScript Type Checkが成功する
-- [ ] #12 Frontend Testが成功する
-- [ ] #13 Next.js Buildが成功する
-- [ ] #14 必要なConfigurationとpackage-lock.jsonがGit管理されている
-- [ ] #15 必要な開発ドキュメントが更新されている
+- [x] #1 Acceptance Criteria are satisfied
+- [x] #2 Required tests pass
+- [x] #3 Required lint and static analysis pass
+- [x] #4 Documentation is updated if needed
+- [x] #5 No temporary or debug code remains
+- [x] #6 Self review is completed
+- [x] #7 Final Summary is completed
+- [x] #8 Acceptance Criteriaをすべて満たしている
+- [x] #9 PrettierによるFormat Checkが成功する
+- [x] #10 ESLintが成功する
+- [x] #11 TypeScript Type Checkが成功する
+- [x] #12 Frontend Testが成功する
+- [x] #13 Next.js Buildが成功する
+- [x] #14 必要なConfigurationとpackage-lock.jsonがGit管理されている
+- [x] #15 必要な開発ドキュメントが更新されている
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -81,3 +81,17 @@ CIへの組み込みはTASK-10で行う。
 8. Lint / Type Check / Test / Buildを実行する
 9. 必要な開発ドキュメントを更新する
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+- PrettierをFrontend/BFFのDevelopment Dependencyとして導入した
+- Prettier Configurationを追加し、Semicolonを有効化した
+- ESLintをCode Quality、PrettierをFormattingとして責務を分離した
+- `format` / `format:check` Commandを追加した
+- OpenAPI Generated CodeをPrettierの対象外に設定した
+- 既存のFrontend/BFF CodeへPrettierを適用した
+- Docker開発環境でFormat Checkの成功を確認した
+- ESLint / TypeScript Type Check / Frontend Test / Next.js Buildの成功を確認した
+- Frontend Formattingの開発ドキュメントを更新した
+<!-- SECTION:FINAL_SUMMARY:END -->

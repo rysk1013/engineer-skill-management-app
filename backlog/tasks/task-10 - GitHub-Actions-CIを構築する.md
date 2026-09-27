@@ -4,6 +4,7 @@ title: GitHub Actions / CIを構築する
 status: To Do
 assignee: []
 created_date: '2026-09-27 08:39'
+updated_date: '2026-09-27 12:10'
 labels:
   - phase-0
   - infrastructure
@@ -15,6 +16,7 @@ dependencies:
   - TASK-7
   - TASK-8
   - TASK-9
+  - TASK-12
 references:
   - docs/06_開発・運用/02_CI-Platform.md
   - docs/06_開発・運用/03_CICD方針.md
