@@ -1,9 +1,10 @@
 ---
 id: TASK-12
 title: FrontendにPrettierを導入する
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-09-27 08:50'
+updated_date: '2026-09-27 08:52'
 labels:
   - phase-0
   - frontend
