@@ -1,10 +1,10 @@
 ---
 id: TASK-13
 title: Laravelを13へUpgradeする
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-09-28 11:09'
-updated_date: '2026-09-28 11:19'
+updated_date: '2026-09-28 11:59'
 labels:
   - phase-0
   - backend
@@ -34,29 +34,29 @@ Backendのテスト基盤を構築するTASK-8へ進む前に、Framework Versio
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 BackendでLaravel 13.xが利用されている
-- [ ] #2 composer.jsonのPHP / Laravel Version制約が技術選定と一致している
-- [ ] #3 Laravel 13と互換性のあるDependency構成になっている
-- [ ] #4 composer.lockがLaravel 13のDependency構成で更新されている
-- [ ] #5 Docker開発環境上でLaravel Applicationが正常に起動する
-- [ ] #6 既存のBackend Health Endpointが正常に応答する
-- [ ] #7 既存のBackend Testが成功する
-- [ ] #8 Laravel 13へのUpgradeによる不要な一時コードや互換対応が残っていない
+- [x] #1 BackendでLaravel 13.xが利用されている
+- [x] #2 composer.jsonのPHP / Laravel Version制約が技術選定と一致している
+- [x] #3 Laravel 13と互換性のあるDependency構成になっている
+- [x] #4 composer.lockがLaravel 13のDependency構成で更新されている
+- [x] #5 Docker開発環境上でLaravel Applicationが正常に起動する
+- [x] #6 既存のBackend Health Endpointが正常に応答する
+- [x] #7 既存のBackend Testが成功する
+- [x] #8 Laravel 13へのUpgradeによる不要な一時コードや互換対応が残っていない
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Acceptance Criteria are satisfied
-- [ ] #2 Required tests pass
-- [ ] #3 Required lint and static analysis pass
-- [ ] #4 Documentation is updated if needed
-- [ ] #5 No temporary or debug code remains
-- [ ] #6 Self review is completed
-- [ ] #7 Final Summary is completed
-- [ ] #8 Laravel 13.xへのUpgradeが完了している
-- [ ] #9 Docker開発環境でBackendが正常に動作する
-- [ ] #10 composer.json / composer.lockがGit管理されている
-- [ ] #11 TASK-8をLaravel 13前提で開始できる状態になっている
+- [x] #1 Acceptance Criteria are satisfied
+- [x] #2 Required tests pass
+- [x] #3 Required lint and static analysis pass
+- [x] #4 Documentation is updated if needed
+- [x] #5 No temporary or debug code remains
+- [x] #6 Self review is completed
+- [x] #7 Final Summary is completed
+- [x] #8 Laravel 13.xへのUpgradeが完了している
+- [x] #9 Docker開発環境でBackendが正常に動作する
+- [x] #10 composer.json / composer.lockがGit管理されている
+- [x] #11 TASK-8をLaravel 13前提で開始できる状態になっている
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -74,3 +74,25 @@ Backendのテスト基盤を構築するTASK-8へ進む前に、Framework Versio
 10. 必要なドキュメントを更新する
 11. Self Reviewを実施する
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Laravel BackendをLaravel 12からLaravel 13へUpgradeした。
+
+- PHP Version制約を^8.5へ更新
+- laravel/frameworkを^13.0へ更新（13.33.0を導入）
+- laravel/tinkerを^3.0へ更新（3.0.2を導入）
+- PHPUnitを^12.0へ更新（12.5.36を導入）
+- Laravel 13に必要なComposer Dependencyを更新
+- composer validate成功
+- Laravel Applicationの起動を確認
+- /up がHTTP 200で応答することを確認
+- /api/v1/health がHTTP 200で応答することを確認
+- composer test成功（2 tests / 2 assertions）
+- Pint --test成功（27 files）
+- Laravel 13 Upgradeによる既存コードへの追加修正は不要であることを確認
+- 技術選定Documentは既にPHP 8.5 / Laravel 13を採用しているため更新不要
+
+これによりTASK-8のBackendテスト基盤構築をLaravel 13前提で開始できる状態になった。
+<!-- SECTION:FINAL_SUMMARY:END -->
