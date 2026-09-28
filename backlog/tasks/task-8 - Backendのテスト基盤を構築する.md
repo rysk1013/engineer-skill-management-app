@@ -4,14 +4,13 @@ title: Backendのテスト基盤を構築する
 status: To Do
 assignee: []
 created_date: '2026-09-27 08:31'
+updated_date: '2026-09-28 11:20'
 labels:
   - phase-0
   - backend
 milestone: Phase 0 - 開発基盤
 dependencies:
-  - TASK-2
-  - TASK-3
-  - TASK-5
+  - TASK-13
 references:
   - docs/02_アーキテクチャ/01_Backend/Laravel/12_テスト戦略.md
   - docs/04_技術選定/Backend/12_Test.md
