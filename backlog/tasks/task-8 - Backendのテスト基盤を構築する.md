@@ -1,10 +1,10 @@
 ---
 id: TASK-8
 title: Backendのテスト基盤を構築する
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-09-27 08:31'
-updated_date: '2026-09-28 11:20'
+updated_date: '2026-09-28 12:06'
 labels:
   - phase-0
   - backend
