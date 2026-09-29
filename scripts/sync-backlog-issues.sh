@@ -166,6 +166,30 @@ extract_task_body() {
   ' "$task_file"
 }
 
+format_issue_task_body() {
+  awk '
+    /^## Acceptance Criteria$/ || /^## Definition of Done$/ {
+      numbered_checklist_section = 1
+      print
+      next
+    }
+
+    /^## / {
+      numbered_checklist_section = 0
+      print
+      next
+    }
+
+    numbered_checklist_section {
+      sub(/^(- \[[ xX]\]) #[0-9]+ /, "\\1 ")
+    }
+
+    {
+      print
+    }
+  '
+}
+
 get_array_display_value() {
   local task_file="$1"
   local expression="$2"
@@ -437,7 +461,7 @@ generate_issue_body() {
     printf '| Created | %s |\n' "$created_date"
     printf '\n'
 
-    extract_task_body "$task_file"
+    extract_task_body "$task_file" | format_issue_task_body
 
     printf '\n---\n\n'
     printf '<!-- backlog-task-id: %s -->\n\n' "$task_id"
