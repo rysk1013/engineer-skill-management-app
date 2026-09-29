@@ -33,13 +33,6 @@ services:
     volumes:
       - ./backend:/app
       - backend_vendor:/app/vendor
-    environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_DATABASE: engineer_skill_management
-      DB_USERNAME: app
-      DB_PASSWORD: password
     networks:
       - frontend
       - backend
@@ -62,6 +55,23 @@ services:
       test:
         - CMD-SHELL
         - pg_isready -U app -d engineer_skill_management
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  test-db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: engineer_skill_management_test
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: password
+    networks:
+      - backend
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U app -d engineer_skill_management_test
       interval: 5s
       timeout: 5s
       retries: 5
