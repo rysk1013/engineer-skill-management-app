@@ -4,7 +4,7 @@ title: Backlog → GitHub Issues同期時のAC・DoD項目番号を除去する
 status: In Progress
 assignee: []
 created_date: '2026-09-29 15:57'
-updated_date: '2026-09-29 16:04'
+updated_date: '2026-09-29 16:06'
 labels: []
 dependencies: []
 priority: high
@@ -38,3 +38,14 @@ Backlog.md側では項目番号を保持し、GitHub Issue本文を生成する�
 - [ ] #6 Self review is completed
 - [ ] #7 Final Summary is completed
 <!-- DOD:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. 現在のGitHub Issue本文生成処理とTask Body構造を確認する
+2. Acceptance Criteria / Definition of Doneセクションを識別して項目番号（#n）を除去する変換処理を追加する
+3. generate_issue_bodyからGitHub Issue向け変換処理を利用する
+4. AC / DoD以外のTask Bodyおよび通常のGitHub Issue参照が変更されないことを確認する
+5. Shell Scriptの構文・Lintを確認する
+6. Backlog → GitHub Issues同期を実行し、実際のIssue本文を確認する
+<!-- SECTION:PLAN:END -->
