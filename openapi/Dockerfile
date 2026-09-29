@@ -2,10 +2,12 @@ FROM node:24-bookworm-slim
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+RUN corepack enable
 
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-CMD ["npm", "run", "check"]
+CMD ["pnpm", "run", "check"]

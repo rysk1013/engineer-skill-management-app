@@ -528,7 +528,10 @@ DependencyはLock Fileに基づいて再現可能な形でInstallする。
 
 ```text id="6p4bh1"
 frontend
-→ package-lock.json / pnpm-lock.yaml
+→ pnpm-lock.yaml
+
+openapi
+→ pnpm-lock.yaml
 
 backend
 → composer.lock

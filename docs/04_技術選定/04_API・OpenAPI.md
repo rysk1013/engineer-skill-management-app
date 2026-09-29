@@ -144,7 +144,7 @@ openapi/openapi.yaml
    │
    └── Redocly Bundle
           ↓
-      dist/openapi.yaml
+       dist/openapi.yaml
 ```
 
 ---
@@ -198,7 +198,7 @@ openapi/
 ├── openapi.yaml
 ├── redocly.yaml
 ├── package.json
-├── package-lock.json
+├── pnpm-lock.yaml
 ├── Dockerfile
 │
 ├── paths/
@@ -618,40 +618,42 @@ Project の性質に適合しない Rule は理由を明確にしたうえで設
 
 OpenAPI Tooling は `openapi/package.json` で管理する。
 
+Package Manager には pnpm を利用する。
+
 基本コマンド：
 
 ```bash
-npm run lint
-npm run bundle
-npm run generate:types
-npm run generate
-npm run check
+pnpm run lint
+pnpm run bundle
+pnpm run generate:types
+pnpm run generate
+pnpm run check
 ```
 
 責務：
 
 ```text
-npm run lint
+pnpm run lint
 └── OpenAPI Lint
 
-npm run bundle
+pnpm run bundle
 └── OpenAPI Bundle
 
-npm run generate:types
+pnpm run generate:types
 └── TypeScript Type Generation
 
-npm run generate
+pnpm run generate
 ├── Bundle
 └── TypeScript Type Generation
 
-npm run check
+pnpm run check
 ├── Lint
 └── Generate
     ├── Bundle
     └── TypeScript Type Generation
 ```
 
-開発者および CI が OpenAPI 全体を検証する際は、原則として `npm run check` を利用する。
+開発者および CI が OpenAPI 全体を検証する際は、原則として `pnpm run check` を利用する。
 
 ---
 
@@ -788,15 +790,15 @@ OpenAPI Container は開発 Server として常駐させず、必要な処理を
 OpenAPI 全体の検証：
 
 ```bash
-docker compose run --rm openapi npm run check
+docker compose run --rm openapi pnpm run check
 ```
 
 個別実行：
 
 ```bash
-docker compose run --rm openapi npm run lint
-docker compose run --rm openapi npm run bundle
-docker compose run --rm openapi npm run generate:types
+docker compose run --rm openapi pnpm run lint
+docker compose run --rm openapi pnpm run bundle
+docker compose run --rm openapi pnpm run generate:types
 ```
 
 OpenAPI Specification は Frontend 固有 Artifact ではなく、Frontend / Backend 共有の Contract として扱う。
@@ -1004,12 +1006,14 @@ API Client 全体の自動生成は行わない。
 
 OpenAPI Tooling の Dependency は `openapi/package.json` で管理する。
 
+Package Manager には pnpm を利用し、`openapi/pnpm-lock.yaml` を Git 管理する。
+
 Docker では専用の `openapi` Containerを利用する。
 
 基本的な検証コマンド：
 
 ```bash
-docker compose run --rm openapi npm run check
+docker compose run --rm openapi pnpm run check
 ```
 
 ### Contract Validation
@@ -1040,9 +1044,9 @@ OpenAPI
    ├── Redocly Bundle
    └── openapi-typescript
           ↓
-      Generated Type
+       Generated Type
           ↓
-      Difference Check
+       Difference Check
 ```
 
 ### 採用しないもの
