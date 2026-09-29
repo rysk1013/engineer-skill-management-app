@@ -4,9 +4,10 @@ title: Backlog → GitHub Issues同期時のAC・DoD項目番号を除去する
 status: In Progress
 assignee: []
 created_date: '2026-09-29 15:57'
-updated_date: '2026-09-29 16:01'
+updated_date: '2026-09-29 16:04'
 labels: []
 dependencies: []
+priority: high
 ordinal: 15000
 ---
 
