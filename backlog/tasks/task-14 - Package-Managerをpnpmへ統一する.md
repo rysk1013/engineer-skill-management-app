@@ -1,10 +1,10 @@
 ---
 id: TASK-14
 title: Package Managerをpnpmへ統一する
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-09-29 13:13'
-updated_date: '2026-09-29 13:17'
+updated_date: '2026-09-29 15:42'
 labels:
   - phase-0
   - frontend
@@ -37,30 +37,30 @@ pnpmのVersionはpackageManagerで固定し、再現可能なDependency Install�
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 FrontendのPackage Managerがpnpmへ変更されている
-- [ ] #2 OpenAPI開発環境のPackage Managerがpnpmへ変更されている
-- [ ] #3 Frontend / OpenAPIのpackage.jsonでpnpm VersionがpackageManagerにより固定されている
-- [ ] #4 package-lock.jsonが削除され、pnpm-lock.yamlがGit管理されている
-- [ ] #5 Frontend / OpenAPIのDockerfileがpnpmを利用してDependencyをInstallする
-- [ ] #6 OpenAPIのpackage.json Scriptからnpm依存のCommandが除去されている
-- [ ] #7 Docker環境でFrontendのDependency InstallおよびApplication起動が成功する
-- [ ] #8 FrontendのLint / Test / Buildがpnpm環境で成功する
-- [ ] #9 OpenAPIのLint / Generate / Checkがpnpm環境で成功する
-- [ ] #10 npmを前提とした現在有効なConfiguration / Documentationがpnpm前提へ更新されている
+- [x] #1 FrontendのPackage Managerがpnpmへ変更されている
+- [x] #2 OpenAPI開発環境のPackage Managerがpnpmへ変更されている
+- [x] #3 Frontend / OpenAPIのpackage.jsonでpnpm VersionがpackageManagerにより固定されている
+- [x] #4 package-lock.jsonが削除され、pnpm-lock.yamlがGit管理されている
+- [x] #5 Frontend / OpenAPIのDockerfileがpnpmを利用してDependencyをInstallする
+- [x] #6 OpenAPIのpackage.json Scriptからnpm依存のCommandが除去されている
+- [x] #7 Docker環境でFrontendのDependency InstallおよびApplication起動が成功する
+- [x] #8 FrontendのLint / Test / Buildがpnpm環境で成功する
+- [x] #9 OpenAPIのLint / Generate / Checkがpnpm環境で成功する
+- [x] #10 npmを前提とした現在有効なConfiguration / Documentationがpnpm前提へ更新されている
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Acceptance Criteria are satisfied
-- [ ] #2 Required tests pass
-- [ ] #3 Required lint and static analysis pass
-- [ ] #4 Documentation is updated if needed
-- [ ] #5 No temporary or debug code remains
-- [ ] #6 Self review is completed
-- [ ] #7 Final Summary is completed
-- [ ] #8 Frontend / OpenAPIからpackage-lock.jsonが削除されている
-- [ ] #9 Frontend / OpenAPIのpnpm-lock.yamlがGit管理されている
-- [ ] #10 Docker環境でpnpmを利用したFrontend / OpenAPIの実行が成功している
+- [x] #1 Acceptance Criteria are satisfied
+- [x] #2 Required tests pass
+- [x] #3 Required lint and static analysis pass
+- [x] #4 Documentation is updated if needed
+- [x] #5 No temporary or debug code remains
+- [x] #6 Self review is completed
+- [x] #7 Final Summary is completed
+- [x] #8 Frontend / OpenAPIからpackage-lock.jsonが削除されている
+- [x] #9 Frontend / OpenAPIのpnpm-lock.yamlがGit管理されている
+- [x] #10 Docker環境でpnpmを利用したFrontend / OpenAPIの実行が成功している
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -78,3 +78,19 @@ pnpmのVersionはpackageManagerで固定し、再現可能なDependency Install�
 10. OpenAPIのLint / Generate / Checkを実行する
 11. npm由来の不要なConfiguration / Lockfileが残っていないことを確認する
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Frontend / BFFおよびOpenAPI開発環境のPackage Managerをnpmからpnpmへ統一した。
+
+- Frontend / OpenAPIでpnpm 12.6.0をpackageManagerにより固定
+- package-lock.jsonを削除し、pnpm-lock.yamlへ移行
+- DockerfileをCorepack / pnpm対応へ変更
+- OpenAPIのnpm依存Scriptをpnpmへ変更
+- FrontendでLint / Test / Buildが成功することを確認
+- OpenAPIでLint / Generate / Checkが成功することを確認
+- Docker環境でpnpmによるDependency InstallおよびApplication起動を確認
+- 関連する技術選定・開発環境・CI/CD Documentationをpnpm前提へ更新
+- 現在有効なConfiguration / Documentationにnpm依存が残っていないことを確認
+<!-- SECTION:FINAL_SUMMARY:END -->
