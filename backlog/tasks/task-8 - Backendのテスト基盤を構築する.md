@@ -1,10 +1,10 @@
 ---
 id: TASK-8
 title: Backendのテスト基盤を構築する
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-09-27 08:31'
-updated_date: '2026-09-28 12:06'
+updated_date: '2026-09-29 11:41'
 labels:
   - phase-0
   - backend
@@ -33,29 +33,29 @@ Laravel Backendのテストを継続的に実装・実行できるように、Ba
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 決定済みのBackendテスト戦略に基づくTest Toolが導入されている
-- [ ] #2 Pestを利用してBackendのUnit Testを実行できる
-- [ ] #3 Laravel Feature Testを実行できる
-- [ ] #4 PostgreSQLを利用したIntegration Testを実行できる
-- [ ] #5 Unit / Integration / FeatureのTest Suiteを区別して実行できる
-- [ ] #6 Test専用のConfigurationとPostgreSQL Databaseが定義されている
-- [ ] #7 Docker開発環境上でBackend Testが成功する
+- [x] #1 決定済みのBackendテスト戦略に基づくTest Toolが導入されている
+- [x] #2 Pestを利用してBackendのUnit Testを実行できる
+- [x] #3 Laravel Feature Testを実行できる
+- [x] #4 PostgreSQLを利用したIntegration Testを実行できる
+- [x] #5 Unit / Integration / FeatureのTest Suiteを区別して実行できる
+- [x] #6 Test専用のConfigurationとPostgreSQL Databaseが定義されている
+- [x] #7 Docker開発環境上でBackend Testが成功する
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Acceptance Criteria are satisfied
-- [ ] #2 Required tests pass
-- [ ] #3 Required lint and static analysis pass
-- [ ] #4 Documentation is updated if needed
-- [ ] #5 No temporary or debug code remains
-- [ ] #6 Self review is completed
-- [ ] #7 Final Summary is completed
-- [ ] #8 Acceptance Criteriaをすべて満たしている
-- [ ] #9 Backend TestがDocker開発環境で成功する
-- [ ] #10 Test DatabaseがDevelopment Databaseから分離されている
-- [ ] #11 必要な設定ファイルがGit管理されている
-- [ ] #12 必要な開発ドキュメントが更新されている
+- [x] #1 Acceptance Criteria are satisfied
+- [x] #2 Required tests pass
+- [x] #3 Required lint and static analysis pass
+- [x] #4 Documentation is updated if needed
+- [x] #5 No temporary or debug code remains
+- [x] #6 Self review is completed
+- [x] #7 Final Summary is completed
+- [x] #8 Acceptance Criteriaをすべて満たしている
+- [x] #9 Backend TestがDocker開発環境で成功する
+- [x] #10 Test DatabaseがDevelopment Databaseから分離されている
+- [x] #11 必要な設定ファイルがGit管理されている
+- [x] #12 必要な開発ドキュメントが更新されている
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -73,3 +73,19 @@ Laravel Backendのテストを継続的に実装・実行できるように、Ba
 10. Docker開発環境でBackend Test全体を実行する
 11. 必要なドキュメントを更新する
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+- Pest / PHPUnit / Pest Laravel Pluginを導入し、Laravel BackendのTest Runnerを整備した
+- Unit / Integration / Feature Test Suiteを分離し、個別・一括で実行できる構成を整備した
+- `composer test` / `composer test:unit` / `composer test:integration` / `composer test:feature` を追加した
+- Docker ComposeにTest専用PostgreSQL Service `test-db` を追加した
+- `backend/.env.testing` を追加し、Development DatabaseとTest Databaseの接続設定を分離した
+- Integration Testで実PostgreSQLへの接続とMigration適用を確認できるTestを追加した
+- Integration Testでは `RefreshDatabase` を利用する構成とした
+- Laravel Feature TestをPestで実行できる最小構成を整備した
+- Docker開発環境上でUnit / Integration / Feature / 全Testが成功することを確認した
+- PintおよびComposer Configuration Validationが成功することを確認した
+- Backend Test環境とTest Databaseの利用方法を開発環境ドキュメントへ反映した
+<!-- SECTION:FINAL_SUMMARY:END -->
