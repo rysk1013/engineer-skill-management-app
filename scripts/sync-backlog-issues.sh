@@ -180,8 +180,8 @@ format_issue_task_body() {
       next
     }
 
-    numbered_checklist_section {
-      sub(/^(- \[[ xX]\]) #[0-9]+ /, "\\1 ")
+    numbered_checklist_section && /^- \[[ xX]\] #[0-9]+ / {
+      sub(/#[0-9]+ /, "")
     }
 
     {
