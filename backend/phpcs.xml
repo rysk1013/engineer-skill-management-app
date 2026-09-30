@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<ruleset name="EngineerSkillManagementApp">
+    <description>
+        Code complexity and maintainability monitoring rules for the backend.
+    </description>
+
+    <file>app</file>
+
+    <rule ref="CleanCode.Metrics.CyclomaticComplexity"/>
+    <rule ref="CleanCode.Metrics.NPathComplexity"/>
+    <rule ref="CleanCode.Functions.ExcessiveMethodLength"/>
+    <rule ref="CleanCode.Metrics.ExcessiveClassComplexity"/>
+    <rule ref="CleanCode.Functions.DisallowBooleanArgumentFlag"/>
+    <rule ref="CleanCode.DeadCode.UnusedFormalParameter"/>
+    <rule ref="CleanCode.DeadCode.UnusedPrivateElements"/>
+</ruleset>
