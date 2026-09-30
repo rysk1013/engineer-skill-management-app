@@ -10,6 +10,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "complexity": "eslint --rule 'complexity: warn'",
+    "quality": "pnpm lint && pnpm typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",

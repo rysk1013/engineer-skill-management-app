@@ -61,6 +61,10 @@
         "complexity": [
             "@php vendor/bin/phpmetrics app"
         ],
+        "quality": [
+            "@lint",
+            "@analyse"
+        ],
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
