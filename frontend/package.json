@@ -8,6 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "complexity": "eslint --rule 'complexity: warn'",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
