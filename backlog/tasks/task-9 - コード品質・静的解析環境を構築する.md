@@ -1,9 +1,10 @@
 ---
 id: TASK-9
 title: コード品質・静的解析環境を構築する
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-09-27 08:35'
+updated_date: '2026-09-30 01:56'
 labels:
   - phase-0
   - frontend
