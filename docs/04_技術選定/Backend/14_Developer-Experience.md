@@ -257,15 +257,23 @@ PHPStan + Larastan
 
 ## 12. `composer complexity`
 
-Complexity / Code Smell：
+Complexity / Maintainability Monitoring：
 
 ```text
 composer complexity
     ↓
-PHPMD
+PHP_CodeSniffer
+    ↓
+CleanCode
+    ↓
+backend/phpcs.xml
 ```
 
 とする。
+
+CleanCode Standard全体は適用せず、`backend/phpcs.xml`でProjectに必要なSniffのみを選択する。
+
+`composer complexity`はMVP初期ではMonitoring Commandとして扱い、`composer quality`には含めない。
 
 ---
 
@@ -285,16 +293,16 @@ Pest Architecture Test
 
 ## 14. `composer quality`
 
-Static Quality Checkをまとめる。
+BlockingなStatic Quality Checkをまとめる。
 
 ```text
 composer quality
     ↓
 Pint --test
 PHPStan + Larastan
-PHPMD
-Architecture Test
 ```
+
+Complexity / Maintainability Monitoringは`composer complexity`へ分離する。
 
 Test Suite全体とは分離する。
 
@@ -1941,15 +1949,20 @@ Developer
 make check
     ↓
 Backend
-│   ├── Pint
-│   ├── PHPStan / Larastan
-│   ├── PHPMD
-│   ├── Architecture Test
-│   └── Pest / Contract Test
+│   ├── Blocking
+│   │   ├── Pint
+│   │   ├── PHPStan / Larastan
+│   │   ├── Architecture Test
+│   │   └── Pest / Contract Test
+│   │
+│   └── Monitoring
+│       └── CleanCode + PHP_CodeSniffer
 │
 └── Frontend / BFF
     └── Frontend側Quality Pipeline
 ```
+
+BackendのComplexity / MaintainabilityはMonitoringとして扱い、BlockingなQuality Checkとは分離する。
 
 ---
 

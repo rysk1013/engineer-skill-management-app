@@ -1897,8 +1897,8 @@ MVP開始時点では専用Commercial SASTを必須としない。
 既存構成：
 
 ```text
-PHPStan
-PHPMD
+PHPStan / Larastan
+CleanCode + PHP_CodeSniffer
 Architecture Test
 Dependency Audit
 Code Review
@@ -1906,6 +1906,10 @@ Security Test
 ```
 
 をまず整える。
+
+CleanCode + PHP_CodeSnifferは専用SASTとして利用するものではなく、Complexity / Maintainability Monitoringを担当する。
+
+Security上の問題検出については、Static Analysis、Dependency Audit、Architecture Test、Security Test、Code Reviewを組み合わせて補完する。
 
 ---
 

@@ -81,7 +81,7 @@ Branch、Commit、Pull Request、Mergeなどの詳細については[`07_Git・G
 | [CI Platform](./02_CI-Platform.md) | Repository、Workflow、Trigger、Branch保護、権限 | GitHub / GitHub Actions |
 | [CI/CD方針](./03_CICD方針.md) | CI Job、実行条件、Failure、Cache、CD | MVPではCIを導入、CDは後続決定 |
 | [ステージング環境](./04_ステージング環境.md) | Hosting候補、Network、Cloud認証、今後の決定事項 | AWS ECS構成を第一候補として継続検討 |
-| [コード品質・複雑度監視](./05_コード品質・複雑度監視.md) | Complexityの計測、Threshold、CIでの扱い | ESLint `complexity` / PHPMD |
+| [コード品質・複雑度監視](./05_コード品質・複雑度監視.md) | Complexityの計測、Threshold、CIでの扱い | ESLint `complexity` / CleanCode + PHP_CodeSniffer |
 | [タスク管理・開発フロー](./06_タスク管理・開発フロー.md) | Backlog.md、Task、Implementation Plan、Definition of Done、Phase運用 | Backlog.mdをSource of TruthとしてTaskを管理 |
 | [Git・GitHub運用](./07_Git・GitHub運用.md) | Branch、Commit、Pull Request、Merge、GitHub Repository設定 | `main` / `dev` + Pull Request中心の運用 |
 
@@ -205,7 +205,7 @@ GitHub Actionsでは変更領域に応じてJobを分割し、可能な処理は
 
 - Laravel Pint
 - PHPStan / Larastan
-- PHPMD
+- CleanCode + PHP_CodeSniffer
 - PHPUnit
 - Laravel Feature Test
 - PostgreSQL Integration Test
@@ -262,9 +262,10 @@ CDの方針については[`03_CICD方針.md`](./03_CICD方針.md)を参照し�
 コード品質・複雑度については以下を基本方針とします。
 
 - Frontend / BFFではESLintの`complexity` Ruleを使用します。
-- Backend APIではPHPMDを使用します。
+- Backend APIではCleanCode + PHP_CodeSnifferを使用します。
+- Backendの監視RuleはProject Ruleset `backend/phpcs.xml`で管理し、必要なSniffのみを選択します。
 - 複雑度の増加は、Component、Use Case、Aggregate、Handler、Policyなどへの責務集中を見直すSignalとして扱います。
-- MVP初期では複雑度超過だけを理由にCIを失敗させず、計測と警告を中心に運用します。
+- MVP初期では複雑度超過だけを理由にCIを失敗させず、Monitoringとして運用します。
 - 数値を下げることだけを目的とした過度な分割や不要なLayer追加は行いません。
 
 詳細は[`05_コード品質・複雑度監視.md`](./05_コード品質・複雑度監視.md)を参照してください。
