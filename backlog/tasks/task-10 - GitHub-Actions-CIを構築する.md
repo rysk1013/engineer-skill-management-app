@@ -1,10 +1,10 @@
 ---
 id: TASK-10
 title: GitHub Actions / CIを構築する
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-09-27 08:39'
-updated_date: '2026-09-27 12:10'
+updated_date: '2026-09-30 07:35'
 labels:
   - phase-0
   - infrastructure
