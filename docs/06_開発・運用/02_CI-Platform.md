@@ -98,41 +98,50 @@ frontend/
 
 主な実行内容：
 
+### Blocking Check
+
 1. Dependency Install
 2. Prettier Check
 3. ESLint
-4. Complexity Check
-5. TypeScript Type Check
-6. Vitest
-7. Next.js Build
+4. TypeScript Type Check
+5. Vitest
+6. Next.js Build
+
+### Monitoring Check
+
+1. ESLint `complexity`
 
 概念：
 
 ```text
 Dependency Install
-        ↓
+       ↓
 Prettier Check
-        ↓
+       ↓
 ESLint
-        ↓
-Complexity Check
-        ↓
+       ↓
 TypeScript Type Check
-        ↓
+       ↓
 Vitest
-        ↓
+       ↓
 Next.js Build
+
+ESLint complexity
+       ↓
+Complexity
+       ↓
+Monitoring
 ```
+
+通常のESLint RuleはBlocking Checkとして扱う。
+
+ESLint `complexity` RuleはMonitoring Checkとして扱い、Complexity Threshold超過のみを理由としてMergeをBlockingしない。
 
 DependencyはLock Fileに基づいて再現可能な形でInstallする。
 
-npmを採用した場合は、CIでは原則として以下を利用する。
+Projectではpnpmを利用するため、CIでもLock Fileを固定してDependencyをInstallする。
 
-```bash
-npm ci
-```
-
-具体的なPackage ManagerはProject Setup時に決定する。
+具体的なCommandはCI Workflow構築時にProject Commandへ合わせて決定する。
 
 ---
 
@@ -146,13 +155,18 @@ backend/
 
 主な実行内容：
 
+### Blocking Check
+
 1. Composer Dependency Install
 2. Laravel Pint Check
 3. PHPStan / Larastan
-4. PHPMD
-5. PostgreSQL Test Database起動
-6. Migration
-7. PHPUnit / Laravel Test
+4. PostgreSQL Test Database起動
+5. Migration
+6. Pest / Laravel Test
+
+### Monitoring Check
+
+1. CleanCode + PHP_CodeSniffer Complexity / Maintainability Check
 
 概念：
 
@@ -163,12 +177,48 @@ Pint Check
        ↓
 PHPStan / Larastan
        ↓
-PHPMD
-       ↓
 Migration
        ↓
-PHPUnit / Laravel Test
+Pest / Laravel Test
+
+CleanCode + PHP_CodeSniffer
+       ↓
+Complexity / Maintainability
+       ↓
+Monitoring
 ```
+
+Blocking CheckとComplexity Monitoringを分離する。
+
+BackendのBlockingなCode Quality CheckはProject Commandとして、
+
+```bash
+composer quality
+```
+
+を利用する。
+
+Complexity / Maintainability Monitoringは、
+
+```bash
+composer complexity
+```
+
+を利用する。
+
+`composer complexity`ではProject Ruleset、
+
+```text
+backend/phpcs.xml
+```
+
+で選択したCleanCode SniffをPHP_CodeSnifferから実行する。
+
+Complexity / Maintainability Threshold超過のみを理由としてMergeをBlockingしない。
+
+CleanCode / PHP_CodeSnifferがNon-zero Exit Codeを返す場合でも、それ自体をProjectとしてのBlocking判定とはしない。
+
+具体的なGitHub Actions上のNon-blocking実装方法はCI Workflow構築時に決定する。
 
 Composer Dependencyは`composer.lock`に基づいてInstallする。
 
@@ -738,25 +788,73 @@ Temporary Credential
 
 ## 25. Complexity
 
-Frontend：
+ComplexityはMVP初期ではBlocking Quality GateではなくMonitoringとして扱う。
+
+### Frontend / BFF
 
 ```text
 ESLint complexity
+       ↓
+Cyclomatic Complexity
+       ↓
+Monitoring
 ```
 
-Backend：
+Local / Project Command：
+
+```bash
+pnpm complexity
+```
+
+### Backend API
 
 ```text
-PHPMD
+CleanCode + PHP_CodeSniffer
+       ↓
+backend/phpcs.xml
+       ↓
+Complexity / Maintainability
+       ↓
+Monitoring
 ```
 
-MVPではComplexityをCode Qualityの可視化・Review材料として利用する。
+Local / Project Command：
+
+```bash
+composer complexity
+```
+
+BackendではCleanCode Standard全体を適用せず、Project Ruleset `backend/phpcs.xml`で必要なSniffのみを選択する。
+
+MVPではComplexity / MaintainabilityをCode Qualityの可視化・Code Review・Refactoringの判断材料として利用する。
 
 Complexity Threshold超過のみを理由としてCI Failureとすることは原則行わない。
 
-ただし、極端に複雑なCodeが検出された場合はRefactoringの判断材料とする。
+また、Complexity Monitoring CommandがNon-zero Exit Codeを返すことと、ProjectとしてMergeをBlockingすることを同一視しない。
 
-将来的にProjectの実績データが蓄積した段階でThresholdやQuality Gateへの組み込みを再検討する。
+```text
+Command Failure
+      ≠
+Merge Blocking Policy
+```
+
+具体的なGitHub Actions上のNon-blocking実装方法はCI Workflow構築時に決定する。
+
+極端に複雑なCodeが検出された場合は、責務分離やDomain Modelingを見直すためのSignalとして利用する。
+
+将来的にProjectの実績データが蓄積した段階で、Project固有ThresholdやQuality Gateへの組み込みを再検討する。
+
+```text
+Monitoring
+    ↓
+Metric / Violation蓄積
+    ↓
+Project固有Threshold検討
+    ↓
+Warning
+    ↓
+必要な場合のみBlocking
+```
 
 ---
 
@@ -825,30 +923,60 @@ E2E CI
 
 ### Frontend CI
 
-以下を基本とする。
+Blocking：
 
 ```text
 Dependency Install
 Prettier
 ESLint
-Complexity
 Type Check
 Vitest
 Next.js Build
 ```
 
+Monitoring：
+
+```text
+ESLint complexity
+```
+
 ### Backend CI
 
-以下を基本とする。
+Blocking：
 
 ```text
 Composer Install
-Pint
+Laravel Pint
 PHPStan / Larastan
-PHPMD
 Migration
-PHPUnit / Laravel Test
+Pest / Laravel Test
 ```
+
+Monitoring：
+
+```text
+CleanCode + PHP_CodeSniffer
+    ↓
+Complexity / Maintainability
+```
+
+Backend Complexity MonitoringではProject Ruleset `backend/phpcs.xml`で選択したCleanCode Sniffを実行する。
+
+### Complexity Monitoring
+
+Frontend / BackendともにComplexityをMVP初期ではMonitoringとして扱う。
+
+Complexity Threshold超過のみを理由としてMergeをBlockingしない。
+
+```text
+Frontend
+    → pnpm complexity
+
+Backend
+    → composer complexity
+```
+
+具体的なGitHub Actions上のNon-blocking実装方法はCI Workflow構築時に決定する。
 
 ### OpenAPI CI
 

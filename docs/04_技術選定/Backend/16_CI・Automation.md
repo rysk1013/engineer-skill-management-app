@@ -225,17 +225,19 @@ Merge
 
 ## 12. Fast Feedback
 
-Developerが早くFailureを確認できるよう、軽いCheckを優先的に実行する。
+Developerが早くFailure / Warningを確認できるよう、軽いCheckを優先的に実行する。
 
 候補：
 
-```text id="z1vl6p"
+```text
 Pint
 PHPStan / Larastan
-PHPMD
+CleanCode + PHP_CodeSniffer
 Architecture Test
 Unit Test
 ```
+
+CleanCode + PHP_CodeSnifferによるComplexity / Maintainability CheckはMonitoringとして扱い、Blocking Checkとは分離する。
 
 ---
 
@@ -1613,14 +1615,16 @@ CIでは必要に応じJob単位へ分割するが、内部ScriptはLocalと共�
 
 ## 116. Backend Pipeline
 
-```text id="148g4d"
+```text
 Pull Request
     │
     ├── backend-quality
     │     ├── Pint
     │     ├── PHPStan / Larastan
-    │     ├── PHPMD
     │     └── Architecture
+    │
+    ├── backend-complexity
+    │     └── CleanCode + PHP_CodeSniffer
     │
     ├── backend-unit
     │
@@ -1630,17 +1634,13 @@ Pull Request
     ├── backend-feature-contract
     │     ├── Feature
     │     └── OpenAPI Contract
-    │
-    ├── backend-security
-    │     ├── composer audit
-    │     └── security-related tests
-    │
-    ├── openapi-ci
-    │
-    └── container-build-scan
-          ├── Build
-          └── Trivy
 ```
+
+`backend-quality`はBlocking Checkとして扱う。
+
+`backend-complexity`はComplexity / Maintainability Monitoringを担当し、MVP初期ではBlocking Checkとはしない。
+
+具体的なGitHub Actions上のJob構成およびNon-blocking実装方法はCI Workflow構築時に決定する。
 
 ---
 

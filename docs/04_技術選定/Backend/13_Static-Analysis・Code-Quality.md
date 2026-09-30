@@ -11,6 +11,7 @@
 - Formatting
 - Coding Style
 - Complexity
+- Maintainability
 - Code Smell
 - Architecture Dependency Rule
 - Automated Refactoring
@@ -41,8 +42,8 @@ PHPStan + Larastan
 Laravel Pint
     → Formatting / Coding Style
 
-PHPMD
-    → Complexity / Code Smell
+CleanCode + PHP_CodeSniffer
+    → Complexity / Maintainability / Code Smell
 
 Pest Architecture Test
     → Architecture Dependency Rule
@@ -52,6 +53,18 @@ Rector
 ```
 
 各Toolの責務を重複させすぎない。
+
+また、Quality Checkを以下の2種類へ分離する。
+
+```text
+Blocking
+    → Merge可否を判断するQuality Gate
+
+Monitoring
+    → Refactoringや設計ReviewのSignal
+```
+
+Complexity / MaintainabilityはMonitoringとして扱い、単一の数値Violationのみを理由としてMergeを禁止しない。
 
 ---
 
@@ -67,7 +80,7 @@ Formatting
     → Laravel Pint
 
 Maintainability
-    → PHPMD
+    → CleanCode + PHP_CodeSniffer
 
 Architecture Integrity
     → Pest Architecture Test
@@ -488,24 +501,34 @@ Laravel Default
 Localでは、
 
 ```bash
-./vendor/bin/pint
+composer format
 ```
 
-で自動修正する。
+を標準Commandとする。
+
+内部ではLaravel Pintを実行する。
 
 ---
 
 ## 28. CI Formatting
 
-CIでは、
+Formatting Checkでは、
+
+```bash
+composer lint
+```
+
+を利用する。
+
+内部では、
 
 ```bash
 ./vendor/bin/pint --test
 ```
 
-によってFormatting違反を検出する。
+を実行する。
 
-違反時はCI Failureとする。
+Formatting違反はBlockingとし、CI Failureとする。
 
 ---
 
@@ -568,15 +591,57 @@ PHPStan
 
 ---
 
-# PHPMD
+# CleanCode / PHP_CodeSniffer
 
-## 33. PHPMD
+## 33. CleanCode
 
-Maintainability / Complexity / Code Smell検出にPHPMDを採用する。
+Maintainability / Complexity / Code Smell監視にCleanCodeを採用する。
+
+CleanCodeはPHP_CodeSniffer向けのCoding Standard / Custom Sniff群として利用する。
+
+構成：
+
+```text
+PHP_CodeSniffer
+    +
+CleanCode
+    +
+Project Ruleset
+```
+
+Project Rulesetは、
+
+```text
+backend/phpcs.xml
+```
+
+で管理する。
 
 ---
 
-## 34. PHPMDの役割
+## 34. 採用理由
+
+当初はPHPMDを採用候補としていた。
+
+しかし、現在のLaravel / Symfony依存関係ではStable版PHPMDの導入にDependency Conflictが発生する。
+
+PHPMD 3系についても関連DependencyをDevelopment Versionへ依存させる必要があり、Phase 0時点の標準Toolとして採用しない。
+
+代替候補としてPhpMetricsも検証したが、Complexity Metricsの可視化には適する一方、当初求めていた以下の責務を十分に満たさない。
+
+```text
+NPath Complexity
+Code Smell
+Unused Code
+```
+
+CleanCodeについて検証した結果、現在のBackend環境でDependency Conflictなく導入でき、必要なComplexity / Maintainability関連Sniffを選択して利用できることを確認した。
+
+そのため、BackendのComplexity / Maintainability Monitoring ToolとしてCleanCode + PHP_CodeSnifferを採用する。
+
+---
+
+## 35. CleanCodeの役割
 
 主に以下を確認する。
 
@@ -589,23 +654,26 @@ Code Smell
 Unused Code
 ```
 
+ただし、CleanCode Standard全体を有効化するのではなく、Projectの目的に必要なSniffのみを選択する。
+
 ---
 
-## 35. PHPStanとの違い
+## 36. PHPStanとの違い
 
 ```text
 PHPStan
     → 型的に正しいか
 
-PHPMD
+CleanCode
     → Maintainability上複雑すぎないか
+      設計上Reviewすべき兆候がないか
 ```
 
 とする。
 
 ---
 
-## 36. Type CorrectでもComplexなCode
+## 37. Type CorrectでもComplexなCode
 
 例えば、
 
@@ -617,48 +685,79 @@ Nested loop
 複雑なBranch
 ```
 
-はPHPStanでは問題にならなくてもPHPMDで検出できる。
+はPHPStanでは問題にならなくても、Complexity / Maintainability上のReview対象となる。
+
+CleanCodeをそのSignalとして利用する。
 
 ---
 
-## 37. PHPMD Ruleset
+## 38. CleanCode Ruleset
 
-Project用Rulesetを作成する。
-
-候補：
+Project用Rulesetとして、
 
 ```text
-cleancode
-codesize
-design
-unusedcode
+backend/phpcs.xml
 ```
 
-等。
+を利用する。
 
-全Ruleを無条件に有効化しない。
+初期構成：
+
+```xml
+<?xml version="1.0"?>
+<ruleset name="EngineerSkillManagementApp">
+    <description>
+        Code complexity and maintainability monitoring rules for the backend.
+    </description>
+
+    <file>app</file>
+
+    <rule ref="CleanCode.Metrics.CyclomaticComplexity"/>
+    <rule ref="CleanCode.Metrics.NPathComplexity"/>
+    <rule ref="CleanCode.Functions.ExcessiveMethodLength"/>
+    <rule ref="CleanCode.Metrics.ExcessiveClassComplexity"/>
+    <rule ref="CleanCode.Functions.DisallowBooleanArgumentFlag"/>
+    <rule ref="CleanCode.DeadCode.UnusedFormalParameter"/>
+    <rule ref="CleanCode.DeadCode.UnusedPrivateElements"/>
+</ruleset>
+```
 
 ---
 
-## 38. controversial Rules
+## 39. Selective Rules
 
-`controversial`等については、
+CleanCode Standard全体は利用しない。
+
+CleanCodeにはProject ArchitectureやCoding Policyに対してOpinionatedなRuleも含まれるため、
 
 ```text
-ValueがあるRule
-    → Enable
+CleanCode Standard全体
+    → 不採用
 
-False Positive / Project不適合
-    → Disable
+必要なSniff
+    → 個別採用
 ```
 
-とし、Project用Rulesetで明示する。
+とする。
+
+特に以下のようなRuleを無条件に導入しない。
+
+```text
+Repository Class禁止
+Static Member禁止
+Conditional禁止
+Else禁止
+Test File必須
+Namespace Naming制約
+```
+
+Project Architecture / DDD / Laravel方針と独立して、外部Toolの思想をそのままArchitecture Ruleとして採用しない。
 
 ---
 
-## 39. Complexity Monitoring
+## 40. Complexity Monitoring
 
-特に以下を継続監視する。
+以下を継続監視する。
 
 ```text
 Cyclomatic Complexity
@@ -667,17 +766,159 @@ Method Length
 Class Complexity
 ```
 
+これらはCode Quality Gateではなく、Refactoringや責務分割を検討するためのMonitoring指標として扱う。
+
 ---
 
-## 40. Complexity Threshold
+## 41. Cyclomatic Complexity
 
-開始時点ではPHPMDの標準的なThresholdを基準にする。
+以下のSniffを利用する。
+
+```text
+CleanCode.Metrics.CyclomaticComplexity
+```
+
+初期ThresholdはCleanCodeのDefaultを利用する。
+
+```text
+Report Level
+    → 10
+```
+
+Project独自Thresholdが必要になった場合は`phpcs.xml`で明示する。
+
+---
+
+## 42. NPath Complexity
+
+以下のSniffを利用する。
+
+```text
+CleanCode.Metrics.NPathComplexity
+```
+
+初期Threshold：
+
+```text
+Minimum
+    → 200
+```
+
+条件分岐の組み合わせによるExecution Pathの増大を検出するSignalとして利用する。
+
+---
+
+## 43. Method Length
+
+以下のSniffを利用する。
+
+```text
+CleanCode.Functions.ExcessiveMethodLength
+```
+
+初期Threshold：
+
+```text
+Minimum
+    → 100 lines
+```
+
+巨大Methodを検出し、責務分割を検討するSignalとして利用する。
+
+---
+
+## 44. Class Complexity
+
+以下のSniffを利用する。
+
+```text
+CleanCode.Metrics.ExcessiveClassComplexity
+```
+
+初期Threshold：
+
+```text
+Maximum WMC
+    → 50
+```
+
+Class内MethodのComplexityを基に、Class自体の責務肥大化を確認する。
+
+---
+
+## 45. Code Smell
+
+初期Code Smell Ruleとして、
+
+```text
+CleanCode.Functions.DisallowBooleanArgumentFlag
+```
+
+を利用する。
+
+Boolean Flagによって1つのMethodが複数のBehaviorを持っていないか確認するSignalとして扱う。
+
+ただし、
+
+```text
+Boolean Argument
+    = 必ずDesign Error
+```
+
+とは判断しない。
+
+検出結果をReview対象として扱う。
+
+---
+
+## 46. Unused Code
+
+以下を利用する。
+
+```text
+CleanCode.DeadCode.UnusedFormalParameter
+CleanCode.DeadCode.UnusedPrivateElements
+```
+
+主に、
+
+```text
+Unused Parameter
+Unused Private Property
+Unused Private Method
+```
+
+を検出する。
+
+ただし、これらだけでProject全体のDead Codeを完全に検出できるとは考えない。
+
+PHPStan / IDE / Rector / Code Reviewと組み合わせる。
+
+---
+
+## 47. Complexity Threshold
+
+開始時点ではCleanCodeのDefault Thresholdを基準にする。
+
+```text
+Cyclomatic Complexity
+    → 10
+
+NPath Complexity
+    → 200
+
+Method Length
+    → 100
+
+Class WMC
+    → 50
+```
 
 根拠なく細かいProject独自Thresholdを大量に作らない。
 
 ---
 
-## 41. Threshold調整
+## 48. Threshold調整
 
 実際のCodebaseを見ながら、
 
@@ -686,25 +927,36 @@ False Positive
 Review Experience
 Codebase Size
 Domain Complexity
+Monitoring Result
 ```
 
 を基準に後から調整する。
 
+Thresholdを変更する場合は、
+
+```text
+backend/phpcs.xml
+```
+
+で明示する。
+
 ---
 
-## 42. Complexity Warning
+## 49. Complexity Warning
 
-Complexity Warningは単なる数値Violationではなく、
+Complexity Violationは単なる数値Violationではなく、
 
 > 責務配置が間違っていないか確認するSignal
 
 として扱う。
 
+CleanCode / PHPCSがNon-zero Exit Codeを返す場合でも、Complexity Monitoring自体をMerge Blocking条件とはしない。
+
 ---
 
 # LayerごとのComplexity
 
-## 43. Controller
+## 50. Controller
 
 Single Action Controller方針のためControllerはSimpleであるべき。
 
@@ -722,7 +974,7 @@ Resource
 
 ---
 
-## 44. Controller Warning
+## 51. Controller Warning
 
 ControllerでComplexity Warningが頻発する場合、
 
@@ -736,7 +988,7 @@ Validation Logic
 
 ---
 
-## 45. Application Handler
+## 52. Application Handler
 
 HandlerはUseCase Orchestrationへ限定する。
 
@@ -753,7 +1005,7 @@ Return
 
 ---
 
-## 46. Handler Warning
+## 53. Handler Warning
 
 大量の、
 
@@ -768,7 +1020,7 @@ nested branch
 
 ---
 
-## 47. Domain
+## 54. Domain
 
 Domain Complexityは単純な数値だけでは判断しない。
 
@@ -780,13 +1032,13 @@ Business Ruleとして自然なComplexityも存在する。
 
 # Rector
 
-## 48. Rector
+## 55. Rector
 
 Automated Refactoring / Code Modernization ToolとしてRectorを採用する。
 
 ---
 
-## 49. Rectorの用途
+## 56. Rectorの用途
 
 主な用途：
 
@@ -800,19 +1052,19 @@ Mechanical Code Transformation
 
 ---
 
-## 50. Rectorの位置付け
+## 57. Rectorの位置付け
 
 日常必須Quality Gateとは少し役割を分ける。
 
 ```text
 Pint
-    → 常時
+    → 常時 / Blocking
 
 PHPStan / Larastan
-    → 常時
+    → 常時 / Blocking
 
-PHPMD
-    → 常時
+CleanCode
+    → 常時利用可能 / Monitoring
 
 Rector
     → Refactoring / Upgrade中心
@@ -820,7 +1072,7 @@ Rector
 
 ---
 
-## 51. Rector Configuration
+## 58. Rector Configuration
 
 `rector.php`でProject採用Ruleを明示する。
 
@@ -828,7 +1080,7 @@ Rector
 
 ---
 
-## 52. Rector Rule
+## 59. Rector Rule
 
 優先：
 
@@ -842,7 +1094,7 @@ ProjectでReview済みRule
 
 ---
 
-## 53. Rector Diff Review
+## 60. Rector Diff Review
 
 Rectorによる自動変更も通常Code ChangeとしてReviewする。
 
@@ -860,7 +1112,7 @@ Test / Analysis
 
 ---
 
-## 54. Rector Dry Run
+## 61. Rector Dry Run
 
 必要に応じCIで、
 
@@ -872,7 +1124,7 @@ Test / Analysis
 
 ---
 
-## 55. Rector Quality Gate
+## 62. Rector Quality Gate
 
 MVP初期ではRector Dry Runを必須Quality Gateにしなくてもよい。
 
@@ -882,13 +1134,13 @@ ProjectのRector Ruleが安定した段階でRequired Checkへ昇格できる。
 
 # Architecture Quality
 
-## 56. Pest Architecture Test
+## 63. Pest Architecture Test
 
 `12_Test.md`で決定済みのPest Architecture TestをArchitecture Ruleの中心として利用する。
 
 ---
 
-## 57. Architecture Rule例
+## 64. Architecture Rule例
 
 ```text
 Domain
@@ -906,7 +1158,7 @@ Application
 
 ---
 
-## 58. Architecture RuleとStatic Analysis
+## 65. Architecture RuleとStatic Analysis
 
 Architecture TestはPHPStanの代替ではない。
 
@@ -924,13 +1176,13 @@ Pest Architecture
 
 # Deptrac
 
-## 59. Deptrac
+## 66. Deptrac
 
 MVPではDeptracを採用しない。
 
 ---
 
-## 60. 不採用理由
+## 67. 不採用理由
 
 既に、
 
@@ -942,7 +1194,7 @@ Pest Architecture Test
 
 ---
 
-## 61. Tool重複を避ける
+## 68. Tool重複を避ける
 
 以下のように同じRuleを複数Toolで大量管理することを避ける。
 
@@ -956,7 +1208,7 @@ Deptrac
 
 ---
 
-## 62. Deptrac再検討条件
+## 69. Deptrac再検討条件
 
 以下の段階で再検討する。
 
@@ -973,28 +1225,29 @@ Project規模が大きくなった場合の将来候補とする。
 
 # Duplication
 
-## 63. Copy / Paste Detector
+## 70. Copy / Paste Detector
 
 MVPでは専用Copy / Paste Detectorを採用しない。
 
 ---
 
-## 64. Duplicationの確認
+## 71. Duplicationの確認
 
 以下でまず対応する。
 
 ```text
 Code Review
-PHPMD
 IDE
 Refactoring
 ```
+
+CleanCodeをDuplication Detectorとしては扱わない。
 
 Tool追加ありきにしない。
 
 ---
 
-## 65. DRY
+## 72. DRY
 
 DRYを目的化しない。
 
@@ -1008,7 +1261,7 @@ Wrong Abstraction
 
 ---
 
-## 66. Generic Abstraction
+## 73. Generic Abstraction
 
 以下のような抽象化をDuplication削減だけを理由に作らない。
 
@@ -1025,24 +1278,35 @@ Domain Meaningを優先する。
 
 # Dead Code
 
-## 67. Dead Code
+## 74. Dead Code
 
 Dead Code Detectionは、
 
 ```text
 PHPStan
+CleanCode
 Rector
 IDE
 Code Review
 ```
 
-を中心に対応する。
+を組み合わせて対応する。
+
+CleanCodeでは、
+
+```text
+Unused Formal Parameter
+Unused Private Property
+Unused Private Method
+```
+
+を補助的に監視する。
 
 専用Dead Code ToolはMVPでは追加しない。
 
 ---
 
-## 68. Dead Code削除
+## 75. Dead Code削除
 
 未使用Codeを、
 
@@ -1058,7 +1322,7 @@ Git Historyを利用できるため不要Codeは削除する。
 
 # final
 
-## 69. `final`
+## 76. `final`
 
 継承を意図していないClassは`final`を基本候補とする。
 
@@ -1077,7 +1341,7 @@ Value Object
 
 ---
 
-## 70. finalを強制しすぎない
+## 77. finalを強制しすぎない
 
 すべてのClassへ機械的に`final`を付与するRuleまでは設けない。
 
@@ -1087,7 +1351,7 @@ Design Intentを基準に判断する。
 
 # readonly
 
-## 71. readonly
+## 78. readonly
 
 Immutable Data Carrierでは`readonly`を積極的に利用する。
 
@@ -1103,7 +1367,7 @@ Value Object
 
 ---
 
-## 72. final readonly
+## 79. final readonly
 
 特にImmutable DTO等では、
 
@@ -1117,7 +1381,7 @@ final readonly class
 
 # Error Suppression
 
-## 73. Error Suppression Operator
+## 80. Error Suppression Operator
 
 PHPのError Suppression Operator：
 
@@ -1129,7 +1393,7 @@ PHPのError Suppression Operator：
 
 ---
 
-## 74. 例外
+## 81. 例外
 
 Library / Legacy API等で回避困難な場合のみ使用を許容する。
 
@@ -1147,7 +1411,7 @@ Failure Handling
 
 # Dynamic Behavior
 
-## 75. Dynamic Property
+## 82. Dynamic Property
 
 Dynamic Propertyを前提としたCodeを書かない。
 
@@ -1155,7 +1419,7 @@ Propertyを明示する。
 
 ---
 
-## 76. Magic
+## 83. Magic
 
 Domain / Applicationでは、
 
@@ -1169,7 +1433,7 @@ Reflection-based Behavior
 
 ---
 
-## 77. Laravel Magic
+## 84. Laravel Magic
 
 Infrastructure / PresentationではLaravel Framework上必要なMagicを許容する。
 
@@ -1179,33 +1443,36 @@ Infrastructure / PresentationではLaravel Framework上必要なMagicを許容�
 
 # Quality Gate
 
-## 78. Pull Request Quality Gate
+## 85. Pull Request Quality Gate
 
-Pull Requestでは原則以下を実行する。
+Pull Requestでは原則以下のBlocking Checkを実行する。
 
 ```text
 Pint
 PHPStan + Larastan
-PHPMD
 Pest Architecture Test
 Pest Test Suite
 OpenAPI Contract Test
 ```
 
+Complexity / Maintainabilityについては別途Monitoringする。
+
+```text
+CleanCode + PHP_CodeSniffer
+    → Monitoring
+```
+
 ---
 
-## 79. Failure Policy
+## 86. Failure Policy
 
-原則：
+Blocking：
 
 ```text
 Pint Violation
     → CI Fail
 
 PHPStan Error
-    → CI Fail
-
-PHPMD Violation
     → CI Fail
 
 Architecture Violation
@@ -1218,97 +1485,113 @@ Contract Test Failure
     → CI Fail
 ```
 
----
-
-## 80. Warning放置
-
-大量のWarningを許容して形骸化させない。
-
-Issueは、
+Monitoring：
 
 ```text
-修正
-設定調整
-明示的な限定Ignore
+CleanCode Violation
+    → Report / Review Signal
+    → Merge Blockingにはしない
 ```
 
-のいずれかで処理する。
+---
+
+## 87. Monitoring結果の放置
+
+MonitoringをNon-blockingとすることは、結果を無視してよいことを意味しない。
+
+継続的または重大なViolationは、
+
+```text
+Code Review
+Refactoring
+Threshold Review
+Architecture Review
+Issue化
+```
+
+等で対応する。
+
+Monitoring結果が大量に常態化してSignalとして機能しなくなる状態を避ける。
 
 ---
 
 # Fast Fail
 
-## 81. CI実行順
+## 88. CI実行順
 
-Fast Feedbackを考慮し、概念的には以下を推奨する。
+Fast Feedbackを考慮し、Blocking Checkは概念的には以下を推奨する。
 
 ```text
 1. Pint --test
 
 2. PHPStan / Larastan
 
-3. PHPMD
+3. Architecture Test
 
-4. Architecture Test
+4. Unit Test
 
-5. Unit Test
+5. Integration Test
 
-6. Integration Test
+6. Feature Test
 
-7. Feature Test
-
-8. Contract Test
+7. Contract Test
 ```
+
+Complexity MonitoringはBlocking Pipelineと分離して実行できる。
+
+```text
+CleanCode / PHPCS
+    → Monitoring Job
+```
+
+具体的なCI構成はTASK-10および`16_CI・Automation.md`で定義する。
 
 ---
 
-## 82. Parallel Execution
+## 89. Parallel Execution
 
 独立可能なJobはCI上でParallel実行してよい。
 
-具体的なWorkflowは`16_CI・Automation.md`で定義する。
+Blocking / Monitoringの責務を維持したうえで実行時間を短縮する。
 
 ---
 
 # Composer Scripts
 
-## 83. Tool Commandの統一
+## 90. Tool Commandの統一
 
 Developerが各Toolの細かいCommandを毎回覚える必要がないようComposer Scriptsを利用する。
 
 ---
 
-## 84. Script候補
+## 91. 標準Command
 
-概念：
+Backendの標準Commandを以下とする。
 
 ```text
 composer format
 composer lint
 composer analyse
+composer complexity
 composer quality
 composer test
 ```
 
 ---
 
-## 85. `composer format`
-
-概念：
+## 92. `composer format`
 
 ```text
 composer format
     ↓
-Pint
+Laravel Pint
 ```
 
 Auto Fix用途。
 
 ---
 
-## 86. `composer lint`
-
-概念：
+## 93. `composer lint`
 
 ```text
 composer lint
@@ -1318,48 +1601,95 @@ Pint --test
 
 Formatting Check用途。
 
+Blocking Checkとして扱う。
+
 ---
 
-## 87. `composer analyse`
-
-概念：
+## 94. `composer analyse`
 
 ```text
 composer analyse
     ↓
-PHPStan / Larastan
+PHPStan + Larastan
 ```
 
 Static Analysis用途。
 
+Blocking Checkとして扱う。
+
 ---
 
-## 88. `composer quality`
+## 95. `composer complexity`
 
-概念：
+```text
+composer complexity
+    ↓
+PHP_CodeSniffer
+    ↓
+backend/phpcs.xml
+    ↓
+Selected CleanCode Sniffs
+```
+
+Complexity / Maintainability Monitoring用途。
+
+ProjectのComposer Scriptでは、
+
+```text
+vendor/bin/phpcs
+```
+
+を実行し、`phpcs.xml`の`<file>app</file>`によってBackend Application Codeを対象とする。
+
+---
+
+## 96. `composer quality`
 
 ```text
 composer quality
     ↓
-Pint --test
-PHPStan / Larastan
-PHPMD
-Architecture Test
+composer lint
+    ↓
+composer analyse
 ```
 
-Local / CIで共通利用できるEntry Pointとする。
+BlockingなCode Quality CheckをまとめたEntry Pointとする。
+
+`composer complexity`はMonitoringであるため、`composer quality`には含めない。
+
+これにより、
+
+```text
+composer quality
+    → Blocking
+
+composer complexity
+    → Monitoring
+```
+
+という責務をCommand Levelでも明確にする。
 
 ---
 
-## 89. Script詳細
+## 97. Test Commandとの分離
 
-最終的なComposer Scripts構成やLocal Developer Workflowは`14_Developer-Experience.md`で整理する。
+`composer quality`はCode Quality Checkに限定する。
+
+Behavior Verificationは、
+
+```bash
+composer test
+```
+
+で実行する。
+
+Architecture Testを含むTest Suiteの構成についてはBackend Test方針に従う。
 
 ---
 
 # Local Development
 
-## 90. Fast Feedback
+## 98. Fast Feedback
 
 Local開発ではFull Quality Suiteだけでなく変更対象に絞ったCommandを利用できるようにする。
 
@@ -1369,11 +1699,39 @@ Local開発ではFull Quality Suiteだけでなく変更対象に絞ったComman
 Pint --dirty
 Targeted Pest Test
 PHPStan
+CleanCode Monitoring
 ```
 
 ---
 
-## 91. Save時Format
+## 99. Local標準確認
+
+BackendのCode Quality確認はProject RootからDocker経由で実行する。
+
+Blocking：
+
+```bash
+docker compose exec backend composer quality
+```
+
+Monitoring：
+
+```bash
+docker compose exec backend composer complexity
+```
+
+必要に応じ個別に、
+
+```bash
+docker compose exec backend composer lint
+docker compose exec backend composer analyse
+```
+
+も利用できる。
+
+---
+
+## 100. Save時Format
 
 EditorでPint相当のFormatをSave時に実行してもよい。
 
@@ -1385,7 +1743,7 @@ CIを最終Quality Gateとする。
 
 # Git Hooks
 
-## 92. Git Hook
+## 101. Git Hook
 
 Git HookはDeveloper Feedback高速化のため利用可能とする。
 
@@ -1397,9 +1755,11 @@ PHPStan
 Targeted Test
 ```
 
+Complexity MonitoringをHookへ追加する場合も、Developer Experienceを著しく損なわない範囲とする。
+
 ---
 
-## 93. Git HookをSource of Truthにしない
+## 102. Git HookをSource of Truthにしない
 
 Git HookはSkip可能なため、
 
@@ -1408,14 +1768,14 @@ Git Hook
     → Developer Convenience
 
 CI
-    → Required Quality Gate
+    → Required Quality Gate / Monitoring
 ```
 
 とする。
 
 ---
 
-## 94. Hook詳細
+## 103. Hook詳細
 
 Git Hook Toolや実行範囲については`14_Developer-Experience.md`で決定する。
 
@@ -1423,7 +1783,7 @@ Git Hook Toolや実行範囲については`14_Developer-Experience.md`で決定
 
 # Testとの関係
 
-## 95. Static AnalysisとTest
+## 104. Static AnalysisとTest
 
 Static Analysisが通ることとBusiness Correctnessは別である。
 
@@ -1439,7 +1799,7 @@ Test
 
 ---
 
-## 96. TestでStatic Analysisを代替しない
+## 105. TestでStatic Analysisを代替しない
 
 例えばNullable Type Errorを、
 
@@ -1453,7 +1813,7 @@ PHPStan Errorとして修正する。
 
 ---
 
-## 97. Static AnalysisでTestを代替しない
+## 106. Static AnalysisでTestを代替しない
 
 逆に、
 
@@ -1470,7 +1830,7 @@ Domain / Application Testを維持する。
 
 # Architectureとの関係
 
-## 98. Domain
+## 107. Domain
 
 Domainでは特に以下を重視する。
 
@@ -1481,14 +1841,14 @@ readonly
 final
 PHPStan
 Pest Architecture
-PHPMD
+Complexity Monitoring
 ```
 
-Framework-independentな強いType Safetyを目指す。
+Framework-independentな強いType Safetyと明確なDomain Modelを目指す。
 
 ---
 
-## 99. Application
+## 108. Application
 
 Applicationでは、
 
@@ -1504,7 +1864,7 @@ Low Complexity
 
 ---
 
-## 100. Presentation
+## 109. Presentation
 
 PresentationではLaravel固有Codeを許容するが、
 
@@ -1518,7 +1878,7 @@ No Business Rule
 
 ---
 
-## 101. Infrastructure
+## 110. Infrastructure
 
 InfrastructureではLaravel / Eloquent / External Library依存を許容する。
 
@@ -1536,7 +1896,7 @@ Type Safety
 
 # Tool Adoption
 
-## 102. 採用技術一覧
+## 111. 採用技術一覧
 
 | Tool / 技術 | 判断 |
 |---|---|
@@ -1549,8 +1909,12 @@ Type Safety
 | Laravel Pint | 採用 |
 | Laravel preset | 採用 |
 | PHP CS Fixer直接利用 | 不採用 |
-| PHPMD | 採用 |
-| Custom PHPMD Ruleset | 採用 |
+| PHP_CodeSniffer | CleanCode実行基盤として採用 |
+| CleanCode | Complexity / Maintainability Monitoringとして採用 |
+| CleanCode Standard全体 | 不採用 |
+| Project `phpcs.xml` | 採用 |
+| PHPMD | 不採用 |
+| PhpMetrics | 不採用 |
 | Rector | 採用 |
 | Rector CI Dry Run | 段階導入 |
 | Pest Architecture Test | 採用済み |
@@ -1568,7 +1932,7 @@ Type Safety
 
 # Tool Responsibility
 
-## 103. Responsibility Matrix
+## 112. Responsibility Matrix
 
 | Concern | Tool |
 |---|---|
@@ -1576,8 +1940,10 @@ Type Safety
 | Laravel Type Analysis | Larastan |
 | Formatting | Pint |
 | Coding Style | Pint |
-| Complexity | PHPMD |
-| Code Smell | PHPMD |
+| Complexity | CleanCode + PHP_CodeSniffer |
+| Maintainability | CleanCode + PHP_CodeSniffer |
+| Code Smell | CleanCode + PHP_CodeSniffer |
+| Partial Unused Code Detection | CleanCode + PHPStan |
 | Layer Dependency | Pest Architecture |
 | Framework Leak | Pest Architecture |
 | Automated Refactoring | Rector |
@@ -1589,7 +1955,9 @@ Type Safety
 
 # CI Quality Pipeline
 
-## 104. 最終Pipeline
+## 113. Blocking Pipeline
+
+Merge可否を判断するBlocking Pipelineは以下を基本とする。
 
 ```text
 Source Code
@@ -1597,8 +1965,6 @@ Source Code
 Pint
     ↓
 PHPStan + Larastan
-    ↓
-PHPMD
     ↓
 Pest Architecture
     ↓
@@ -1611,7 +1977,29 @@ Mergeable
 
 ---
 
-## 105. Rector
+## 114. Monitoring Pipeline
+
+Complexity / MaintainabilityはBlocking Pipelineと責務を分離する。
+
+```text
+Source Code
+    ↓
+PHP_CodeSniffer
+    ↓
+CleanCode Selected Sniffs
+    ↓
+Complexity / Maintainability Report
+    ↓
+Review / Refactoring Signal
+```
+
+CleanCode Violationのみを理由としてMergeを禁止しない。
+
+具体的なGitHub Actions上の実装方法はTASK-10で決定する。
+
+---
+
+## 115. Rector
 
 Rectorは通常Pipelineとは少し分離し、
 
@@ -1633,7 +2021,7 @@ Quality Pipeline
 
 # 最終方針
 
-## 106. Static Analysis
+## 116. Static Analysis
 
 Backend Static Analysisは、
 
@@ -1645,11 +2033,11 @@ Larastan
 
 を中心とする。
 
-新規ProjectであるためBaselineへ依存せず、最終的にPHPStan Level 10を目標とする。
+新規ProjectであるためBaselineへ依存せず、初期Level 9、最終的にPHPStan Level 10を目標とする。
 
 ---
 
-## 107. Formatting
+## 117. Formatting
 
 FormattingはLaravel Pintへ統一する。
 
@@ -1662,9 +2050,19 @@ Laravel Pint
 
 ---
 
-## 108. Maintainability
+## 118. Maintainability
 
-Complexity / Code SmellはPHPMDで監視する。
+Complexity / Maintainability / Code Smellは、
+
+```text
+PHP_CodeSniffer
+    +
+CleanCode
+    +
+backend/phpcs.xml
+```
+
+で監視する。
 
 特に、
 
@@ -1677,17 +2075,54 @@ Mapper
 
 等の責務肥大化を検出する補助として利用する。
 
+CleanCode Standard全体は利用せず、Projectの目的に合うSniffのみを選択する。
+
+また、ComplexityはQualityの絶対評価ではなく、
+
+> Refactoringや責務配置を検討するためのSignal
+
+として扱う。
+
 ---
 
-## 109. Architecture
+## 119. Blocking / Monitoring
+
+Code Quality Checkを明確に分離する。
+
+```text
+Blocking
+├── Laravel Pint
+└── PHPStan + Larastan
+
+Monitoring
+└── CleanCode + PHP_CodeSniffer
+```
+
+Composer Scriptsでも、
+
+```text
+composer quality
+    → Blocking
+
+composer complexity
+    → Monitoring
+```
+
+として同じ境界を維持する。
+
+---
+
+## 120. Architecture
 
 Architecture DependencyはPest Architecture Testで保証する。
 
 現時点ではDeptracを追加しない。
 
+Complexity ToolへArchitecture Ruleの責務を持たせない。
+
 ---
 
-## 110. Automated Refactoring
+## 121. Automated Refactoring
 
 Rectorを、
 
@@ -1704,36 +2139,42 @@ Mechanical Refactoring
 
 ---
 
-## 111. 最終構成
+## 122. 最終構成
 
 Backend Code Qualityの標準構成を以下とする。
 
 ```text
 PHPStan + Larastan
     → Type Safety
+    → Blocking
 
 Laravel Pint
     → Formatting
+    → Blocking
 
-PHPMD
-    → Complexity / Maintainability
+CleanCode + PHP_CodeSniffer
+    → Complexity / Maintainability / Code Smell
+    → Monitoring
 
 Pest Architecture Test
     → Architecture Integrity
+    → Blocking
 
 Rector
     → Automated Evolution
 
 Pest
     → Behavior Verification
+    → Blocking
 
 OpenAPI Contract Test
     → API Contract Verification
+    → Blocking
 ```
 
 ---
 
-## 112. 最重要原則
+## 123. 最重要原則
 
 本Projectでは、
 
@@ -1754,14 +2195,24 @@ Contract
 
 をそれぞれ適切なToolで検証する。
 
+また、
+
+```text
+Blocking
+    → Correctness / Merge Safety
+
+Monitoring
+    → Maintainability / Refactoring Signal
+```
+
+を区別する。
+
 最終的に、
 
 ```text
 Format
     ↓
 Static Analysis
-    ↓
-Complexity
     ↓
 Architecture
     ↓
@@ -1770,4 +2221,14 @@ Tests
 Contract
 ```
 
-というQuality Pipelineを継続的に実行し、Clean Architecture / DDDをCodebase上でも維持する。
+をBlocking Quality Pipelineとして継続的に実行し、
+
+```text
+Complexity / Maintainability
+    ↓
+Monitoring
+    ↓
+Review / Refactoring
+```
+
+を並行して運用することで、Clean Architecture / DDDをCodebase上でも維持する。

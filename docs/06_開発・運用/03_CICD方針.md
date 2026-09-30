@@ -28,7 +28,7 @@ CDについてはDeployment先が未決定のため、具体的な実装方式�
 
 基本方針：
 
-```text id="gyjv4u"
+```text
 Code Change
     ↓
 Pull Request
@@ -104,7 +104,7 @@ CIは単にTestを実行する仕組みではなく、Pull Requestを`main`へ�
 
 Monorepoの主要責務ごとにCIを分離する。
 
-```text id="1i96m3"
+```text
 CI
 ├── Frontend
 ├── Backend
@@ -114,7 +114,7 @@ CI
 
 対象Directory：
 
-```text id="ur9k9p"
+```text
 engineer-skill-management-app/
 ├── frontend/
 ├── backend/
@@ -141,7 +141,7 @@ Frontend / BFFでは以下の品質をCIで確認する。
 
 概念：
 
-```text id="o9n3u4"
+```text
 Frontend Source
       ↓
 Format / Lint
@@ -176,7 +176,7 @@ Laravel Backendでは以下の品質をCIで確認する。
 
 概念：
 
-```text id="qrdl83"
+```text
 Backend Source
       ↓
 Format
@@ -208,7 +208,7 @@ OpenAPI CIでは以下を保証する。
 
 概念：
 
-```text id="03bxgy"
+```text
 OpenAPI
    ↓
 Validation / Lint
@@ -236,7 +236,7 @@ MVPでは画面単位で大量のE2E Testを作成せず、主要業務シナリ
 
 概念：
 
-```text id="u42ee3"
+```text
 User
  ↓
 Browser
@@ -276,7 +276,7 @@ CIは以下を基本Triggerとする。
 
 ### Pull Request
 
-```text id="gqf6cp"
+```text
 Feature Branch
       ↓
 Pull Request
@@ -288,7 +288,7 @@ Pull Request時のCIをMerge前の主要Quality Gateとする。
 
 ### main BranchへのPush
 
-```text id="8cwlsj"
+```text
 Merge
   ↓
 main
@@ -310,7 +310,7 @@ Release / CD設計時に必要なWorkflowを別途設計する。
 
 CI Checkは大きく以下の2種類へ分類する。
 
-```text id="u8p3bw"
+```text
 CI Check
 ├── Blocking Check
 └── Monitoring Check
@@ -357,13 +357,20 @@ MVP初期では以下をMonitoring中心で利用する。
 
 - Complexity
 - Maintainability
-- PHPMDによる一部Quality Metric
+- Frontend / BFFのESLint `complexity`
+- Backend APIのCleanCode + PHP_CodeSnifferによるComplexity / Maintainability Metric
+
+Frontend / BFFではESLint `complexity` Ruleを利用する。
+
+Backend APIではCleanCode Standard全体を適用せず、Project Ruleset `backend/phpcs.xml`で選択したCleanCode SniffをPHP_CodeSnifferから実行する。
 
 Monitoring CheckはCode ReviewやRefactoring判断の材料として利用する。
 
 Threshold超過のみを理由として初期段階から必ずCI Failureにはしない。
 
-```text id="3gms5u"
+また、Monitoring CommandがNon-zero Exit Codeを返すことと、ProjectとしてMergeをBlockingすることを同一視しない。
+
+```text
 Metric
   ↓
 CIで可視化
@@ -373,7 +380,9 @@ Code Review
 必要に応じてRefactoring
 ```
 
-Codebaseの傾向や実績データを確認した後、必要に応じてThresholdやBlocking Checkへの移行を検討する。
+具体的なGitHub Actions上のNon-blocking実装方法はCI Workflow構築時に決定する。
+
+Codebaseの傾向や実績データを確認した後、必要に応じてProject固有ThresholdやBlocking Checkへの移行を検討する。
 
 ---
 
@@ -381,7 +390,7 @@ Codebaseの傾向や実績データを確認した後、必要に応じてThresh
 
 Backend CIおよび必要なE2E TestではTest専用PostgreSQLを利用する。
 
-```text id="x5k1d5"
+```text
 CI
  ↓
 PostgreSQL Test Instance
@@ -413,7 +422,7 @@ Test Dataは再現可能な形で生成する。
 
 CIはMonorepoを前提とする。
 
-```text id="54en77"
+```text
 Repository
 ├── frontend
 ├── backend
@@ -423,7 +432,7 @@ Repository
 
 各領域の品質確認責務を分離する。
 
-```text id="fvk4xc"
+```text
 frontend
     ↓
 Frontend CI
@@ -451,19 +460,19 @@ E2E CI
 
 例：
 
-```text id="k0tnsk"
+```text
 frontend/**
     ↓
 Frontend CI
 ```
 
-```text id="70s24e"
+```text
 backend/**
     ↓
 Backend CI
 ```
 
-```text id="i2d8qa"
+```text
 openapi/**
     ↓
 OpenAPI CI
@@ -475,7 +484,7 @@ Frontend CI
 
 基本方針：
 
-```text id="blzrvh"
+```text
 Correctness
     ↓
 Stability
@@ -512,7 +521,7 @@ CIでは必要に応じて以下を直接構築してよい。
 - Build条件
 - Test条件
 
-```text id="gmgbju"
+```text
 Local
   ↓
 同等Runtime / Dependency
@@ -526,7 +535,7 @@ CI
 
 DependencyはLock Fileに基づいて再現可能な形でInstallする。
 
-```text id="6p4bh1"
+```text
 frontend
 → pnpm-lock.yaml
 
@@ -539,7 +548,7 @@ backend
 
 CacheはCI高速化のために利用できるが、Dependency VersionのSource of Truthにはしない。
 
-```text id="tkd3ws"
+```text
 Lock File
    ↓
 Dependency Version
@@ -557,7 +566,7 @@ MVP初期では正確性・再現性を優先し、Cacheの過度な最適化は
 
 `main` Branchは常に以下の状態を維持することを目標とする。
 
-```text id="ygfm2a"
+```text
 Build可能
     +
 Test成功
@@ -569,7 +578,7 @@ Deploy可能
 
 基本フロー：
 
-```text id="5zefdn"
+```text
 Feature Branch
       ↓
 Pull Request
@@ -595,7 +604,7 @@ Branch保護の具体的な設定は`02_CI-Platform.md`で管理する。
 
 ただし、以下をCDの基本原則とする。
 
-```text id="yey3ct"
+```text
 Source Code
     ↓
 CI
@@ -619,7 +628,7 @@ Stagingで検証したものと同一ArtifactをProductionへDeployすること�
 
 Containerを利用する場合の概念：
 
-```text id="sfxqxn"
+```text
 Commit
   ↓
 Container Image Build
@@ -653,7 +662,7 @@ ArtifactはSource Commitを追跡できるようにする。
 
 概念：
 
-```text id="jdt3a8"
+```text
 Git Commit
     ↓
 Artifact
@@ -669,7 +678,7 @@ ProductionでどのSource Codeが稼働しているか追跡できる状態を�
 
 CD導入時はProduction Deployment前にStaging Environmentで検証することを基本とする。
 
-```text id="d25ysb"
+```text
 Artifact
    ↓
 Staging
@@ -700,7 +709,7 @@ Production DeploymentはCI成功済みのArtifactを利用する。
 
 Production上でSource Codeから直接Buildすることを基本としない。
 
-```text id="uz0hfw"
+```text
 CI
  ↓
 Verified Artifact
@@ -730,7 +739,7 @@ Deployment後に重大な問題が発生した場合はRollback可能な構成�
 
 概念：
 
-```text id="3cg2d9"
+```text
 Production Deployment
         ↓
 Monitoring
@@ -780,7 +789,7 @@ CI/CDで利用する秘密情報をRepositoryへ保存しない。
 
 基本原則：
 
-```text id="wglug6"
+```text
 Secrets
 ├── RepositoryへCommitしない
 ├── Environmentごとに分離する
@@ -802,7 +811,7 @@ Secrets
 
 EnvironmentごとにCredentialを分離する。
 
-```text id="1n89q2"
+```text
 Development
 Staging
 Production
@@ -831,7 +840,7 @@ MVP初期では以下を過度に作り込まない。
 
 MVPではまず、
 
-```text id="6bif3j"
+```text
 Pull Request
     ↓
 Reliable CI
@@ -851,7 +860,7 @@ CI/CDは段階的に導入する。
 
 ### Phase 1：MVP CI
 
-```text id="ufn2uv"
+```text
 Frontend CI
 Backend CI
 OpenAPI CI
@@ -864,7 +873,7 @@ E2E CI
 
 Deployment先決定後、
 
-```text id="k3u7qb"
+```text
 main
  ↓
 Build Artifact
@@ -878,7 +887,7 @@ Staging
 
 Staging運用が安定した後、
 
-```text id="py5wke"
+```text
 Verified Artifact
       ↓
 Production
@@ -908,7 +917,7 @@ GitHub Actionsを採用する。
 
 以下を主要CI単位とする。
 
-```text id="x1ozld"
+```text
 Frontend
 Backend
 OpenAPI
@@ -919,7 +928,7 @@ E2E
 
 CI Checkを以下へ分類する。
 
-```text id="zns6lz"
+```text
 Blocking Check
 Monitoring Check
 ```
@@ -927,6 +936,14 @@ Monitoring Check
 Format / Lint / Static Analysis / Type / Test / Build / OpenAPI Contract等は原則Blockingとする。
 
 Complexity / MaintainabilityはMVP初期ではMonitoring中心とする。
+
+Frontend / BFFではESLint `complexity` Ruleを利用する。
+
+Backend APIではCleanCode + PHP_CodeSnifferを利用し、Project Ruleset `backend/phpcs.xml`で必要なCleanCode Sniffを選択する。
+
+Monitoring CommandのNon-zero Exit CodeとProjectとしてのMerge Blocking Policyは分離して扱う。
+
+具体的なGitHub Actions上のNon-blocking実装方法はCI Workflow構築時に決定する。
 
 ### OpenAPI
 

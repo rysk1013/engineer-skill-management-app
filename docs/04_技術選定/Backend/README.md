@@ -141,7 +141,7 @@ Code Quality
 ├── PHPStan
 ├── Larastan
 ├── Laravel Pint
-├── PHPMD
+├── CleanCode + PHP_CodeSniffer
 └── Rector
 
 Observability
@@ -551,7 +551,7 @@ Static Analysis / Formatting / Complexity / Refactoringを定義する。
 PHPStan
 Larastan
 Pint
-PHPMD
+CleanCode + PHP_CodeSniffer
 Pest Architecture
 Rector
 ```
@@ -962,7 +962,7 @@ Pint
 +
 PHPStan / Larastan
 +
-PHPMD
+CleanCode + PHP_CodeSniffer
 +
 Pest Architecture
 +
