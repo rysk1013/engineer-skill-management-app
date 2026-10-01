@@ -31,6 +31,14 @@ CDについてはDeployment先が未決定のため、具体的な実装方式�
 ```text
 Code Change
     ↓
+Feature Branch
+    ↓
+Pull Request
+    ↓
+必要に応じてCIを手動実行
+    ↓
+dev
+    ↓
 Pull Request
     ↓
 CI
@@ -51,6 +59,10 @@ Monitoring
     ↓
 必要に応じてRollback
 ```
+
+Feature Branchから`dev` BranchへのPull RequestではCIを自動実行せず、必要に応じて手動実行する。
+
+`dev` Branchから`main` BranchへのPull RequestではCIを自動実行し、Merge前の主要Quality Gateとする。
 
 MVPではまずCIを確実に構築し、CDは段階的に導入する。
 
@@ -254,11 +266,13 @@ MVPでは以下を基本とする。
 
 ### Pull Request
 
-E2Eを実行する。
+`main` Branchを対象とするPull RequestでE2Eを実行する。
+
+Feature Branchから`dev` BranchへのPull RequestではE2Eを自動実行しない。
 
 ### main BranchへのPush
 
-E2Eを実行する。
+`main` BranchへのPushでE2Eを実行する。
 
 ### Required Status Check
 
@@ -274,17 +288,41 @@ E2E Test数は必要最小限とし、詳細なBusiness Logicの検証はUnit / 
 
 CIは以下を基本Triggerとする。
 
-### Pull Request
+### Manual
+
+Feature Branchから`dev` BranchへのPull RequestではCIを自動実行しない。
+
+必要に応じてCIを手動実行し、`dev`へMergeする前の品質確認に利用する。
 
 ```text
 Feature Branch
       ↓
 Pull Request
       ↓
+必要に応じてCIを手動実行
+      ↓
+     dev
+```
+
+MVP初期ではCI Costを考慮し、Feature Branchごとの自動CI実行は必須としない。
+
+具体的な手動実行方法は`02_CI-Platform.md`で定義する。
+
+### Pull Request
+
+`main` Branchを対象とするPull RequestでCIを自動実行する。
+
+```text
+dev
+ ↓
+Pull Request
+ ↓
+main
+ ↓
 CI
 ```
 
-Pull Request時のCIをMerge前の主要Quality Gateとする。
+`main`へのMerge前に実行するCIを主要Quality Gateとする。
 
 ### main BranchへのPush
 
@@ -574,12 +612,18 @@ Test成功
 Deploy可能
 ```
 
-通常の開発作業はFeature Branchで行う。
+通常の開発作業はFeature Branchで行い、`dev` Branchへ統合する。
+
+`main` Branchへの統合は`dev` BranchからPull Requestを作成して行う。
 
 基本フロー：
 
 ```text
 Feature Branch
+      ↓
+Pull Request
+      ↓
+dev
       ↓
 Pull Request
       ↓
@@ -591,6 +635,10 @@ Merge
       ↓
 main
 ```
+
+Feature Branchから`dev` BranchへのPull RequestではCIを自動実行せず、必要に応じて手動実行する。
+
+`dev` Branchから`main` BranchへのPull RequestではCIを自動実行する。
 
 Required Status Checksに失敗している変更は原則Mergeしない。
 
@@ -867,7 +915,9 @@ OpenAPI CI
 E2E CI
 ```
 
-まずPull Requestの品質確認を自動化する。
+まず`main` Branchを対象とするPull Requestの品質確認を自動化する。
+
+Feature Branchから`dev` BranchへのPull Requestでは、必要に応じてCIを手動実行する。
 
 ### Phase 2：Staging CD
 
@@ -957,7 +1007,7 @@ Playwrightを利用する。
 
 MVPでは主要業務フローに限定する。
 
-Pull Requestおよび`main`へのPushで実行し、Required化は安定性・実行時間を確認した後に判断する。
+`main` Branchを対象とするPull Requestおよび`main` BranchへのPushで実行し、Required化は安定性・実行時間を確認した後に判断する。
 
 ### Database
 
@@ -967,7 +1017,11 @@ Production / Local Development Databaseは利用しない。
 
 ### Pull Request
 
-CI成功をMerge条件とする。
+Feature Branchから`dev` BranchへのPull RequestではCIを自動実行せず、必要に応じて手動実行する。
+
+`dev` Branchから`main` BranchへのPull RequestではCIを自動実行し、Merge前の主要Quality Gateとする。
+
+Required Status Checksに設定されたCIの成功を`main`へのMerge条件とする。
 
 ### main
 
@@ -1014,7 +1068,7 @@ Production Deployment後に問題が発生した場合、以前の正常なArtif
 ### 基本方針
 
 - CIをMVPから導入する
-- Pull Requestを主要Quality Gateとする
+- `main` Branchを対象とするPull Requestを主要Quality Gateとする
 - Blocking CheckとMonitoring Checkを分離する
 - CIの正確性と再現性を優先する
 - OpenAPIとGenerated Typeの同期をCIで保証する
