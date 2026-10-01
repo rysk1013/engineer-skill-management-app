@@ -43,9 +43,21 @@ Issue / User Story
         ↓
 Feature Branch
         ↓
-   Pull Request
+Pull Request
         ↓
-  GitHub Actions
+       dev
+        ↓
+必要に応じてGitHub Actionsを手動実行
+        ↓
+   Code Review
+        ↓
+      Merge
+        ↓
+       dev
+        ↓
+Pull Request
+        ↓
+GitHub Actions
         │
         ├── Frontend CI
         ├── Backend CI
@@ -55,15 +67,8 @@ Feature Branch
    Code Review
         ↓
       Merge
-```
-
-Frontend / Backend / OpenAPI / E2Eは、それぞれ責務の異なるCIとして扱う。
-
-Frontend / Backend / OpenAPIは原則として並列実行可能とする。
-
-E2Eについても他Workflowとの複雑な依存関係を作ることを前提とせず、必要なApplication Environmentを構築して自己完結して実行できる構成を基本とする。
-
-Required Status Checkに設定されたCIが失敗している場合はMergeできない構成とする。
+        ↓
+      main
 
 ---
 
@@ -343,26 +348,53 @@ E2E
 
 ## 9. Trigger
 
-### Pull Request
+### Manual
 
-`main` Branchを対象とするPull RequestでCIを実行する。
+Feature Branchから`dev` BranchへのPull RequestではCIを自動実行しない。
+
+必要に応じてGitHub Actionsの`workflow_dispatch`を利用し、対象Branchを指定してCIを手動実行する。
 
 ```text
-pull_request
-     ↓
-    main
+Feature Branch
+      ↓
+Pull Request
+      ↓
+     dev
+      ↓
+必要に応じて
+workflow_dispatch
+      ↓
+Frontend / Backend / OpenAPI CI
 ```
 
-Pull Request時のCIをMerge前の主要Quality Gateとする。
+MVP初期ではCI Costを考慮し、Feature Branchごとの自動CI実行は必須としない。
+
+### Pull Request
+
+`main` Branchを対象とするPull RequestでCIを自動実行する。
+
+```text
+dev
+ ↓
+Pull Request
+ ↓
+main
+ ↓
+CI
+```
+
+`main`へのMerge前に実行するCIを主要Quality Gateとする。
 
 ### Push
 
-`main` BranchへのPushでもCIを実行する。
+`main` BranchへのPushでもCIを自動実行する。
 
 ```text
 push
  ↓
 main
+ ↓
+CI
 ```
 
 Merge後の`main`でもBuild / Test可能であることを確認する。
@@ -532,7 +564,7 @@ Deploy可能
 
 機能開発・修正は原則としてPull Request経由とする。
 
-基本フロー：
+通常の開発ではFeature Branchから`dev` BranchへPull Requestを作成する。
 
 ```text
 Issue / User Story
@@ -543,29 +575,45 @@ Commit
         ↓
 Pull Request
         ↓
-GitHub Actions
-        ↓
-Code Review
-        ↓
-Merge
+       dev
 ```
 
-Pull RequestではCI結果とCode Reviewを利用して変更内容を確認する。
+Feature Branchから`dev` BranchへのPull RequestではCIを自動実行せず、必要に応じて`workflow_dispatch`で手動実行する。
+
+`main` Branchへの統合は`dev` BranchからPull Requestを作成する。
+
+```text
+dev
+ ↓
+Pull Request
+ ↓
+GitHub Actions
+ ↓
+Code Review
+ ↓
+Merge
+ ↓
+main
+```
+
+`main` Branchを対象とするPull RequestではCI結果とCode Reviewを利用して変更内容を確認する。
 
 ---
 
 ## 16. Branch Strategy
 
-MVPでは複雑なGit Flowを採用しない。
+MVPでは`main`と`dev`を長期Branchとして利用する。
 
 基本構成：
 
 ```text
 main
- │
- ├── feature/...
- ├── fix/...
- └── chore/...
+ ↑
+dev
+ ↑
+├── feature/...
+├── fix/...
+└── chore/...
 ```
 
 必要に応じて以下も利用できる。
@@ -576,9 +624,35 @@ refactor/...
 test/...
 ```
 
-長期間維持する`develop` Branchは原則設けない。
+通常の開発Branchは`dev`から作成する。
 
-短命なBranchを作成し、Pull Requestを通して`main`へ統合する。
+```text
+dev
+ ↓
+Feature Branch
+ ↓
+Commit
+ ↓
+Pull Request
+ ↓
+dev
+```
+
+Feature Branchから`dev`へのPull RequestではCIを自動実行せず、必要に応じて`workflow_dispatch`で手動実行する。
+
+`main`への統合は`dev`からPull Requestを作成する。
+
+```text
+dev
+ ↓
+Pull Request
+ ↓
+CI
+ ↓
+main
+```
+
+`dev`から`main`へのPull RequestではCIを自動実行し、Merge前の主要Quality Gateとする。
 
 ---
 
@@ -1029,9 +1103,13 @@ CI安定後に必要に応じて導入する。
 
 ### Branch Strategy
 
-`main` + 短命なFeature Branchを基本とする。
+`main`と`dev`を長期Branchとして利用する。
 
-長期間維持する`develop` Branchは原則設けない。
+通常の開発Branchは`dev`から作成し、Pull Requestを通して`dev`へ統合する。
+
+Feature Branchから`dev`へのPull RequestではCIを自動実行せず、必要に応じて`workflow_dispatch`で手動実行する。
+
+`main`への統合は`dev`からPull Requestを作成し、Frontend / Backend / OpenAPI CIを自動実行する。
 
 ### PostgreSQL
 
