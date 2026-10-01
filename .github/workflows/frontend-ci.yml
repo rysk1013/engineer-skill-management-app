@@ -17,6 +17,9 @@ jobs:
     name: Frontend CI
     runs-on: ubuntu-latest
 
+    env:
+      BACKEND_API_URL: http://backend:8000/api/v1
+
     defaults:
       run:
         working-directory: frontend
