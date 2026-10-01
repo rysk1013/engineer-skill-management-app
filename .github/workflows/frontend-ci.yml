@@ -40,19 +40,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Debug Prettier
-        working-directory: frontend
-        run: |
-          pnpm exec prettier --version
-          pnpm exec prettier --find-config-path src/app/globals.css
-          pnpm exec prettier --file-info src/app/globals.css
-          node --input-type=module -e \
-            "import prettier from 'prettier'; console.log(await prettier.resolveConfig('src/app/globals.css'));"
-          sha256sum src/app/globals.css
-          pnpm exec prettier src/app/globals.css > /tmp/globals.prettier.css
-          sha256sum /tmp/globals.prettier.css
-          diff -u src/app/globals.css /tmp/globals.prettier.css || true
-
       - name: Check format
         run: pnpm format:check
 
