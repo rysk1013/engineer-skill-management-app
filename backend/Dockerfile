@@ -35,6 +35,7 @@ RUN composer install \
     --no-interaction \
     --no-progress \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \
+    && chown -R www-data:www-data storage bootstrap/cache
 
 CMD ["php-fpm"]

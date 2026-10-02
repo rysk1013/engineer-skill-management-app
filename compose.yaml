@@ -25,7 +25,9 @@ services:
       - frontend
 
   nginx:
-    image: nginx:bookworm
+    build:
+      context: ./backend
+      dockerfile: docker/nginx/Dockerfile
     ports:
       - "8000:80"
     volumes:
