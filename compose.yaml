@@ -43,6 +43,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: development
+    expose:
+      - "9000"
     volumes:
       - ./backend:/app
       - backend_vendor:/app/vendor
