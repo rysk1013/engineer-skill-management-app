@@ -7,7 +7,6 @@ services:
       - ./openapi:/app
       - ./frontend/src/lib/api/generated:/frontend/src/lib/api/generated
       - openapi_node_modules:/app/node_modules
-    command: npm run check
 
   frontend:
     build:
