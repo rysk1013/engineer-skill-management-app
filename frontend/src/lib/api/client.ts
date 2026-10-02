@@ -2,16 +2,22 @@ import "server-only";
 
 import type { paths } from "./generated/schema";
 
-const backendApiUrl = process.env.BACKEND_API_URL;
-
-if (!backendApiUrl) {
-  throw new Error("BACKEND_API_URL is not configured");
-}
-
 type HealthResponse =
   paths["/health"]["get"]["responses"][200]["content"]["application/json"];
 
+function getBackendApiUrl(): string {
+  const backendApiUrl = process.env.BACKEND_API_URL;
+
+  if (!backendApiUrl) {
+    throw new Error("BACKEND_API_URL is not configured");
+  }
+
+  return backendApiUrl;
+}
+
 export async function getHealth(): Promise<HealthResponse> {
+  const backendApiUrl = getBackendApiUrl();
+
   const response = await fetch(`${backendApiUrl}/health`, {
     method: "GET",
     headers: {

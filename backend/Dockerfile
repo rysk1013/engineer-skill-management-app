@@ -1,4 +1,4 @@
-FROM php:8.5-cli-bookworm
+FROM php:8.5-fpm-bookworm AS base
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -13,12 +13,29 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
+
+FROM base AS development
+
 COPY . .
 
 RUN composer install \
     --no-interaction \
-    --no-progress
+    --no-progress \
+    --prefer-dist
 
-EXPOSE 8000
+CMD ["php-fpm"]
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+
+FROM base AS production
+
+COPY . .
+
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --prefer-dist \
+    --optimize-autoloader \
+    && chown -R www-data:www-data storage bootstrap/cache
+
+CMD ["php-fpm"]
