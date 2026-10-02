@@ -13,6 +13,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: development
     ports:
       - "3000:3000"
     volumes:
@@ -22,7 +23,6 @@ services:
       BACKEND_API_URL: ${BACKEND_API_URL}
     networks:
       - frontend
-    command: npm run dev -- --hostname 0.0.0.0
 
   nginx:
     image: nginx:bookworm
