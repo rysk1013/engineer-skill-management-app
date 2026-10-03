@@ -8,7 +8,6 @@ source "$ROOT_DIR/scripts/lib/common.sh"
 
 cd "$ROOT_DIR"
 
-PROJECT_NAME="engineer-skill-management-app-prod"
 ENV_FILE=".env.production"
 COMPOSE_FILE="compose.production.yaml"
 
@@ -18,6 +17,6 @@ if [[ ! -f "$ENV_FILE" ]]; then
 fi
 
 echo "[INFO] Stopping production containers..."
-compose_down "$PROJECT_NAME" "$ENV_FILE" "$COMPOSE_FILE"
+compose_down "$ENV_FILE" "$COMPOSE_FILE"
 
 echo "[INFO] Production containers stopped successfully."
