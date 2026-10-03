@@ -470,15 +470,30 @@ PHP CS Fixer直接設定
 
 `pint.json`で設定を管理する。
 
-初期Preset：
+基本Configuration：
 
 ```json
 {
-  "preset": "laravel"
+  "preset": "laravel",
+  "rules": {
+    "declare_strict_types": {
+      "strategy": "enforce"
+    }
+  }
 }
 ```
 
-を基本とする。
+Laravel Presetを基本とし、Project固有Ruleは必要最小限に追加する。
+
+`declare_strict_types` Ruleによって、Project PHP Codeでは以下を強制する。
+
+```php
+declare(strict_types=1);
+```
+
+未定義の場合はPint実行時に追加し、既存の `strict_types` 宣言についても `1` へ統一する。
+
+これにより、`strict_types` の付与をDeveloperの手作業に依存させない。
 
 ---
 
@@ -493,6 +508,15 @@ Laravel Default
 ```
 
 とし、大量の独自Coding Standardを作らない。
+
+現時点では、Project全体のType Safety方針を自動適用するため、以下を追加する。
+
+```text
+declare_strict_types
+    → enforce
+```
+
+Coding Style上の好みだけを理由としてCustom Ruleを増やさない。
 
 ---
 
@@ -554,7 +578,16 @@ Import Formatting
 Brace
 Spacing
 Coding Style
+strict_types宣言の統一
 ```
+
+`strict_types` についてはType SafetyそのものをPintが検証するのではなく、
+
+```php
+declare(strict_types=1);
+```
+
+がProject PHP Codeへ一貫して付与されている状態を自動的に維持する。
 
 ---
 
@@ -1940,6 +1973,7 @@ Type Safety
 | Laravel Type Analysis | Larastan |
 | Formatting | Pint |
 | Coding Style | Pint |
+| `strict_types` Declaration | Pint |
 | Complexity | CleanCode + PHP_CodeSniffer |
 | Maintainability | CleanCode + PHP_CodeSniffer |
 | Code Smell | CleanCode + PHP_CodeSniffer |
