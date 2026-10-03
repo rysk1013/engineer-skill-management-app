@@ -1,8 +1,8 @@
 {
-    "preset": "laravel",
-    "rules": {
-        "declare_strict_types": {
-            "strategy": "enforce"
-        }
+  "preset": "laravel",
+  "rules": {
+    "declare_strict_types": {
+      "strategy": "enforce"
     }
+  }
 }
