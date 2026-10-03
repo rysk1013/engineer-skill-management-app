@@ -1,3 +1,5 @@
+name: engineer-skill-management-app-dev
+
 services:
   openapi:
     build:

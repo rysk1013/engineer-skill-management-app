@@ -6,7 +6,6 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 cd "$ROOT_DIR"
 
-PROJECT_NAME="engineer-skill-management-app-dev"
 ENV_FILE=".env"
 COMPOSE_FILE="compose.yaml"
 
@@ -20,7 +19,6 @@ echo "[WARN] Development database and named volumes will be deleted."
 echo "[INFO] Resetting development environment..."
 
 docker compose \
-  -p $PROJECT_NAME \
   --env-file $ENV_FILE \
   -f $COMPOSE_FILE \
   down --volumes --remove-orphans

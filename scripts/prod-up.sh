@@ -8,7 +8,6 @@ source "$ROOT_DIR/scripts/lib/common.sh"
 
 cd "$ROOT_DIR"
 
-PROJECT_NAME="engineer-skill-management-app-prod"
 ENV_FILE=".env.production"
 COMPOSE_FILE="compose.production.yaml"
 
@@ -19,9 +18,9 @@ if [[ ! -f "$ENV_FILE" ]]; then
 fi
 
 echo "[INFO] Validating production compose configuration..."
-compose_config "$PROJECT_NAME" "$ENV_FILE" "$COMPOSE_FILE"
+compose_config "$ENV_FILE" "$COMPOSE_FILE"
 
 echo "[INFO] Starting production containers..."
-compose_up "$PROJECT_NAME" "$ENV_FILE" "$COMPOSE_FILE"
+compose_up "$ENV_FILE" "$COMPOSE_FILE"
 
 echo "[INFO] Production containers started successfully."
