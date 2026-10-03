@@ -1,10 +1,10 @@
 ---
 id: TASK-11
 title: Phase 0の統合確認を行う
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-09-27 08:41'
-updated_date: '2026-09-27 12:10'
+updated_date: '2026-10-03 05:03'
 labels:
   - phase-0
   - infrastructure
