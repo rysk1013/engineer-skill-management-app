@@ -46,6 +46,24 @@ UI設計は以下の構成で管理する。
 ├── 05_デザインシステム.md
 ├── 06_共通コンポーネント.md
 ├── 07_画面設計/
+│   ├── 01_UI設計方針.md
+│   ├── 02_ダッシュボード.md
+│   ├── 03_社員一覧.md
+│   ├── 04_社員詳細.md
+│   ├── 05_社員登録.md
+│   ├── 06_社員編集.md
+│   ├── 07_社員スキル編集.md
+│   ├── 08_スキル一覧.md
+│   ├── 09_スキル登録.md
+│   ├── 10_スキル編集.md
+│   ├── 11_スキルカテゴリ一覧.md
+│   ├── 12_スキルカテゴリ登録.md
+│   ├── 13_スキルカテゴリ編集.md
+│   ├── 14_ユーザー・権限一覧.md
+│   ├── 15_ユーザー権限編集.md
+│   ├── 16_Access-Denied.md
+│   ├── 17_Not-Found.md
+│   └── 18_ログイン.md
 ├── 08_UI状態設計.md
 └── 09_レスポンシブ設計.md
 ```
@@ -78,15 +96,17 @@ Phase 1全体で共通して使用するUI設計方針を定義する。
 
 ### 4.2 `02_画面一覧.md`
 
-MVPで必要となる画面を一覧化する。
+MVPで必要となる画面・主要UIを一覧化する。
 
 主な対象:
 
-- 画面ID
-- 画面名
+- 画面ID / UI ID
+- 画面名 / UI名
 - 目的
 - Route
+- 認証要否
 - 対象Role / Permission
+- Dialog等の主要UI
 - 関連機能
 
 ---
@@ -97,10 +117,12 @@ MVPで必要となる画面を一覧化する。
 
 主な対象:
 
+- 認証前後の遷移
 - 画面遷移
 - Navigation構造
 - Route構成
 - Entry Point
+- Dialogの起点・終了
 - 戻る操作
 - 権限による遷移制御
 
@@ -119,6 +141,8 @@ MVPで必要となる画面を一覧化する。
 - Breadcrumb
 - Page Header
 - User Menu
+- Dialog / Alert Dialog Layout
+- Loading / Empty / Error Layout
 
 ---
 
@@ -163,7 +187,7 @@ Application共通Componentとして設計する。
 - Badge
 - Pagination
 - Dialog
-- Alert
+- Alert Dialog
 - Notification
 - Empty State
 - Error State
@@ -177,19 +201,39 @@ Componentごとに独自実装するのではなく、まずshadcn/uiで要件�
 
 ### 4.7 `07_画面設計/`
 
-個別画面の詳細UI設計を管理する。
+MVPで必要となる個別画面・主要Dialogの詳細UI設計を管理する。
 
-各画面では原則として以下を定義する。
+認証前画面・認証後画面・共通状態画面を含め、それぞれのUI責務を定義する。
+
+主な対象:
+
+- ログイン
+- ダッシュボード
+- 社員一覧 / 詳細
+- 社員登録 / 編集Dialog
+- 社員スキル編集
+- スキル一覧
+- スキル登録 / 編集Dialog
+- スキルカテゴリ一覧
+- スキルカテゴリ登録 / 編集Dialog
+- ユーザー・権限一覧
+- ユーザー権限編集
+- Access Denied
+- Not Found
+
+各画面・主要UIでは原則として以下を定義する。
 
 - 目的
 - 対象ユーザー・権限
 - Route
-- 画面構成
+- 画面 / Dialog構成
 - 表示項目
 - 操作
 - 画面遷移
 - UI状態
 - Responsive
+- Accessibility
+- Wireframe
 - 備考
 
 ---
@@ -202,11 +246,18 @@ Componentごとに独自実装するのではなく、まずshadcn/uiで要件�
 
 - Loading
 - Empty
-- Error
+- Search Result Empty
 - Validation Error
+- Submit / Mutation Loading
+- API Error
+- Operation Error
+- Not Found
+- Access Denied
 - Disabled
-- Confirmation
 - Success Feedback
+- Retry
+- Dialog State
+- Resource状態変化
 
 ---
 
@@ -220,9 +271,12 @@ Componentごとに独自実装するのではなく、まずshadcn/uiで要件�
 - Tablet
 - Mobile
 - Navigation切り替え
-- Table表示
+- Table / List表示
 - Form Layout
+- Dialog
 - Action配置
+- UI状態
+- Accessibility
 
 ---
 
