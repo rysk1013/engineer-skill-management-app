@@ -239,6 +239,8 @@ Iconだけで状態を表現せず、Title・Descriptionを必ず併用する。
 
 Dashboardへのアクセス可否については既存認可設計を正とする。
 
+Dashboardへアクセスできない場合は、別の安全な復帰先を採用する。
+
 ---
 
 ## 14. Feature一覧への復帰
@@ -615,6 +617,10 @@ Feature固有のDomain Logicは持たせない。
 Main Content中央付近へ状態Messageを配置する。
 
 過度に横幅を広げない。
+
+以下のResponsive例およびWireframeでは、安全な復帰先の代表例としてDashboard Actionを表示する。
+
+実際に表示する復帰Actionは現在Userの認可状態および既存Routing方針に従い、Dashboardへアクセスできない場合は別の安全な復帰先を利用する。
 
 例:
 
