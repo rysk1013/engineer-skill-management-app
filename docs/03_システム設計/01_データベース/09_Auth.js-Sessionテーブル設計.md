@@ -35,6 +35,16 @@ Laravel Sanctum TokenはBrowserへ公開しない。
        v
     Laravel Backend API
 
+Auth.js Database Session基盤と、
+Laravel認証およびSanctum Tokenとの連携は責務を分離する。
+
+Auth.js Database Session基盤では、
+BrowserとNext.js間のSession管理を成立させる。
+
+Laravel認証との連携時には、
+既存Application UserとAuth.js Sessionを対応付け、
+発行されたSanctum Tokenを対象Sessionへ紐付ける。
+
 ---
 
 # 2. Session Entity
@@ -70,7 +80,7 @@ Relation：
 | user_id | bigint | NOT NULL | - | FK | Application User |
 | session_token | varchar | NOT NULL | - | UNIQUE | Auth.js Session Token |
 | expires_at | timestamptz | NOT NULL | - | - | Session有効期限 |
-| sanctum_token | text | NOT NULL | - | - | 暗号化されたLaravel Sanctum Token |
+| sanctum_token | text | NULL | NULL | - | 暗号化されたLaravel Sanctum Token。Backend Credential連携前はNULL |
 | created_at | timestamptz | NOT NULL | - | - | Session作成日時 |
 | updated_at | timestamptz | NOT NULL | - | - | Session更新日時 |
 
@@ -113,11 +123,14 @@ Relation：
     ├── Safari Session
     └── Mobile Session
 
+Auth.js専用User Tableを別途作成せず、
+既存Application Userである`users`を利用する。
+
 ---
 
 # 6. Foreign Key削除ルール
 
-`auth_sessions` は業務データではなく一時的な認証状態であるため、
+`auth_sessions`は業務データではなく一時的な認証状態であるため、
 User削除時はSessionも自動削除する。
 
     ON DELETE CASCADE
@@ -143,7 +156,7 @@ Userが正式に削除された後に、
 
 を使用する。
 
-`users.id` は通常変更しない。
+`users.id`は通常変更しない。
 
 ---
 
@@ -168,6 +181,10 @@ Database上のSessionへ対応付ける。
         ↓
     user_id
 
+Database Session Strategyでは、
+Browser側にはSession内容そのものではなく
+Sessionを識別するTokenを保持する。
+
 ---
 
 # 9. session_tokenの扱い
@@ -191,7 +208,7 @@ BrowserではAuth.jsが管理するHttpOnly Cookieとして扱う。
 Browser側のSession Cookieでは以下を基本とする。
 
 - HttpOnly
-- Secure
+- Production / StagingではSecure
 - 適切なSameSite
 - 適切なPath
 - Session有効期限
@@ -199,6 +216,8 @@ Browser側のSession Cookieでは以下を基本とする。
 Production / StagingではHTTPSを使用する。
 
 JavaScriptからSession Cookieを直接取得する構成にはしない。
+
+CookieにはLaravel Sanctum Tokenを含めない。
 
 ---
 
@@ -220,6 +239,9 @@ Timezone：
 
 期限切れSessionは認証済みとして扱わない。
 
+Auth.js側のSession有効期限設定と
+`auth_sessions.expires_at`を対応させる。
+
 ---
 
 # 12. sanctum_token
@@ -231,11 +253,29 @@ Sanctum Personal Access Tokenを保持する。
 
     AuthSession
         |
-        | 1:1
+        | 0..1
         v
     Sanctum Token
 
-1つのAuth.js Sessionに対して、
+Auth.js Database Session基盤と、
+Laravel Backend Credential連携は責務を分離する。
+
+Database Session作成時点では
+Sanctum Tokenがまだ関連付けられていない場合があるため、
+`sanctum_token`はNULLを許可する。
+
+Laravel Login APIによる認証が成功し、
+Sanctum Tokenが発行された後に、
+Next.js Server側で暗号化して対象Sessionへ保存する。
+
+Backend APIへ認証付きRequestを送信する際は、
+
+    sanctum_token IS NULL
+
+のSessionをBackend Credential連携済みとして扱わない。
+
+通常のLogin完了後は、
+1つのAuth.js Sessionに対して
 1つのSanctum Tokenを対応させる。
 
 ---
@@ -249,11 +289,14 @@ Next.js BFFからLaravelへ以下の形式で送信する。
 LaravelではSanctumによってTokenを検証し、
 API利用者を特定する。
 
+`sanctum_token`がNULLの場合は、
+Laravel Backend APIへの認証付きRequestを行わない。
+
 ---
 
 # 14. Sanctum TokenをBrowserへ公開しない
 
-`sanctum_token` はNext.js Server側のみで利用する。
+`sanctum_token`はNext.js Server側のみで利用する。
 
 以下は禁止する。
 
@@ -262,6 +305,7 @@ API利用者を特定する。
 - JavaScriptから参照可能なCookieへの保存
 - Client Componentへの受け渡し
 - API Responseへの含有
+- Application Logへの出力
 
 BrowserはLaravel用Credentialを保持しない。
 
@@ -291,6 +335,9 @@ Sanctum TokenをDatabaseへ平文のまま保存しないことを基本方針�
         ↓
     Authorization Header
 
+暗号化・復号処理は
+Backend Credential連携を実装するTaskで扱う。
+
 ---
 
 # 16. 暗号化の責務
@@ -304,7 +351,10 @@ Browserでは行わない。
 環境変数またはSecret管理機能を使用する。
 
 具体的な暗号化Library / Algorithmは
-Security詳細設計時に決定する。
+Security詳細設計およびBackend Credential連携実装時に決定する。
+
+Auth.js Database Session基盤のみを構築する段階では、
+暗号化・復号処理を実装対象としない。
 
 ---
 
@@ -330,17 +380,59 @@ Laravel側：
     Laravel
     → API認証用Token管理
 
+Next.js側の`sanctum_token`は、
+Laravel側Tokenの代替Storageではない。
+
 ---
 
 # 18. Login Flow
 
-Login時：
+Laravelを認証主体とするLoginでは、
+CredentialsをLaravel Login APIへ送信する。
+
+Auth.jsのCredentials Providerを利用する場合、
+既存Application Userを前提とし、
+Auth.js標準のUser永続化へ依存しない。
+
+Database Session基盤とLaravel Login連携は
+以下の責務として分離する。
+
+## Auth.js Database Session基盤
+
+    Browser
+       |
+       v
+    Next.js / Auth.js
+       |
+       | Database Session管理
+       v
+    auth_sessions
+       |
+       | user_id
+       | session_token
+       | expires_at
+       | sanctum_token = NULL可能
+       v
+    PostgreSQL
+
+この基盤では以下を成立させる。
+
+    Session作成
+    Session取得
+    Session更新
+    Session削除
+    Session有効期限管理
+    Session Cookie管理
+
+## Laravel Login連携
+
+Login時の全体フロー：
 
     1. Browser
        ↓
        Login Request
 
-    2. Next.js / Auth.js
+    2. Next.js
        ↓
        CredentialをLaravelへ送信
 
@@ -350,24 +442,40 @@ Login時：
 
     4. Laravel
        ↓
+       Application User特定
        Sanctum Token発行
 
-    5. Next.js
+    5. Next.js / Auth.js
        ↓
-       Sanctum Token暗号化
+       既存users.idと対応付けて
+       Database Sessionを成立させる
 
-    6. auth_sessions作成
+    6. auth_sessions
        ↓
        user_id
        session_token
        expires_at
-       sanctum_token
+       sanctum_token = NULL
 
-    7. Browser
+    7. Next.js
        ↓
-       Auth.js Session Cookie発行
+       Sanctum Token暗号化
 
-    8. Login完了
+    8. auth_sessions
+       ↓
+       対象Sessionのsanctum_tokenを更新
+
+    9. Browser
+       ↓
+       Auth.js Session Cookie
+
+    10. Login完了
+
+Credentials認証とDatabase Sessionの具体的な接続方法は、
+Backend Credential連携TaskでAuth.jsのAdapter契約に従って実装する。
+
+Auth.js内部実装を無理に上書きする独自方式は避け、
+必要なSession操作は明示的なServer側処理として実装する。
 
 ---
 
@@ -381,30 +489,40 @@ Login後：
        v
     Next.js BFF
        |
-       | Session取得
+       | Auth.js Session確認
        v
     auth_sessions
        |
-       | sanctum_token取得
-       | Decrypt
+       | sanctum_token確認
        v
-    Laravel Backend API
+    sanctum_token IS NULL ?
        |
-       | Authorization: Bearer
-       v
-    Sanctum認証
+       ├── Yes
+       |    └── Backend認証済みとして扱わない
+       |
+       └── No
+            |
+            | Decrypt
+            v
+         Laravel Backend API
+            |
+            | Authorization: Bearer
+            v
+         Sanctum認証
+
+BrowserからLaravel Backend APIを直接呼び出さない。
 
 ---
 
 # 20. Logout Flow
 
-Logout時：
+Backend Credential連携済みSessionのLogout時：
 
     1. Auth.js Sessionを特定
 
-    2. auth_sessionsからSanctum Token取得
+    2. auth_sessionsからsanctum_tokenを確認
 
-    3. Sanctum Token復号
+    3. sanctum_tokenが存在する場合は復号
 
     4. LaravelへToken失効要求
 
@@ -414,6 +532,10 @@ Logout時：
 
     7. Browser Session Cookie削除
 
+`sanctum_token`がNULLの場合は、
+Laravel Token失効処理は不要とする。
+
+Credential連携済みSessionについては、
 Sessionだけ削除してLaravel Tokenを残さない。
 
 ---
@@ -432,7 +554,14 @@ Sessionだけ削除してLaravel Tokenを残さない。
       └── Session B
             └── Sanctum Token B
 
-各Sessionは独立したSanctum Tokenを持つ。
+通常のLogin完了後は、
+各Sessionが独立したSanctum Tokenを持つ。
+
+Session作成からCredential連携が完了するまでの一時的な状態では、
+
+    sanctum_token = NULL
+
+となることを許可する。
 
 これによりSession単位でLogoutできる。
 
@@ -450,12 +579,19 @@ Userに紐付くすべてのSessionを対象とする。
     Session B
     Session C
 
-各Sessionについて対応するSanctum Tokenを失効させた後、
+各Sessionについて`sanctum_token`を確認する。
+
+Tokenが存在するSessionについては
+対応するSanctum Tokenを失効させた後、
 
     auth_sessions
 
 を削除する。
 
+Tokenが存在しないSessionについては、
+Session Recordのみを削除する。
+
+Credential連携済みSessionについて、
 単純にSession Recordだけを削除して
 Sanctum Tokenを残さない。
 
@@ -469,7 +605,7 @@ Sanctum Tokenを残さない。
 
 - 新規Loginを禁止する
 - 既存Auth.js Sessionを失効する
-- 対応するSanctum Tokenも失効する
+- 対応するSanctum Tokenが存在する場合は失効する
 
 ことを基本方針とする。
 
@@ -477,9 +613,13 @@ Sanctum Tokenを残さない。
 
     User無効化
        ↓
-    Sanctum Token失効
+    Sanctum Token確認
+       ↓
+    Token存在時は失効
        ↓
     auth_sessions削除
+
+具体的なLifecycle連携は後続Taskで実装する。
 
 ---
 
@@ -489,8 +629,9 @@ Sanctum Tokenを残さない。
 
 となったSessionは利用できない。
 
-期限切れSessionに対応するSanctum Tokenも
-不要になるため、Cleanup時にはToken失効も行うことを基本とする。
+期限切れSessionに対応するSanctum Tokenが存在する場合、
+そのTokenも不要になるため、
+Cleanup時にはToken失効も行うことを基本とする。
 
 具体的なCleanup方式は後続で決定する。
 
@@ -499,6 +640,9 @@ Sanctum Tokenを残さない。
 - Login / Access時にCleanup
 - Scheduled Job
 - 定期Cleanup処理
+
+Auth.js Database Session基盤では、
+少なくとも期限切れSessionを有効なSessionとして扱わないことを保証する。
 
 ---
 
@@ -533,6 +677,7 @@ MVPでは過剰なIndexを追加しない。
 
     user_id
     NOT NULL
+    FOREIGN KEY
 
     session_token
     NOT NULL
@@ -542,13 +687,20 @@ MVPでは過剰なIndexを追加しない。
     NOT NULL
 
     sanctum_token
-    NOT NULL
+    NULL許可
 
     created_at
     NOT NULL
 
     updated_at
     NOT NULL
+
+Foreign Key：
+
+    auth_sessions.user_id
+        REFERENCES users.id
+        ON DELETE CASCADE
+        ON UPDATE RESTRICT
 
 ---
 
@@ -568,6 +720,15 @@ Session状態は、
 ことで表現する。
 
 無効Sessionは削除する。
+
+`sanctum_token IS NULL`はSession自体の無効状態を意味しない。
+
+これは、
+
+    Auth.js Sessionは存在する
+    Backend Credential連携は未完了
+
+という状態を表す。
 
 業務Entityの無効化とは扱いを分ける。
 
@@ -621,6 +782,23 @@ MVPでは以下を使用する。
 既存Application Userを利用するため、
 Auth.js専用Userを二重作成しない。
 
+Auth.js Adapterからは、
+
+    users
+    auth_sessions
+
+をそれぞれApplication User Table、
+Database Session Tableとして利用できる構成とする。
+
+Auth.js標準Schemaと物理Table名・Column名が異なる場合は、
+Adapter / ORM側でMappingする。
+
+CredentialsによるLaravel認証では、
+Auth.jsによるUser自動永続化を前提としない。
+
+Laravelが特定した既存Application Userと
+Auth.js Sessionを対応付ける。
+
 ---
 
 # 31. MVPで作成しないAuth.js関連Table
@@ -637,17 +815,16 @@ OAuth / OIDC Provider連携時に検討する。
 - Google
 - Okta
 
----
-
 ## verification_tokens
 
 Magic Link / Email Verification等が必要になった場合に検討する。
 
----
-
 ## authenticators
 
 Passkey / WebAuthn導入時に検討する。
+
+MVPで利用しないAuth.js機能のためだけに
+Tableを作成しない。
 
 ---
 
@@ -701,9 +878,13 @@ PostgreSQL：
 
     auth_sessions
     → Browser ↔ Next.js Session
+    → Sessionに対応するBackend Credentialの保持
 
     personal_access_tokens
     → Next.js BFF ↔ Laravel API認証
+
+`auth_sessions`はAuth.js Session管理用Tableであり、
+業務データTableとして扱わない。
 
 ---
 
@@ -711,20 +892,33 @@ PostgreSQL：
 
 `auth_sessions`はNext.js / Auth.js側のSession管理用Tableとする。
 
-ただし同一PostgreSQL DatabaseをNext.jsとLaravelが利用するため、
+同一PostgreSQL DatabaseをNext.jsとLaravelが利用するため、
 Migration Ownershipを明確にする。
 
-第一候補：
+採用方針：
 
     Laravel Migration
     → Application / Laravel管理Table
 
     Next.js側Migration
-    → Auth.js Session Table
+    → Auth.js Session管理Table
 
-同じTableを複数のMigration Toolから変更しない。
+`auth_sessions`のMigrationは
+Next.js側のMigration Toolで管理する。
 
-具体的なMigration Tool選定は別途決定する。
+同じTableをLaravel MigrationとNext.js側Migrationの
+両方から変更しない。
+
+Next.js側ではAuth.js Adapterと親和性があり、
+Schema定義とMigrationを一元管理できるToolを利用する。
+
+具体的なMigration Toolは
+Auth.js Database Session基盤構築時に決定する。
+
+既存`users` TableのMigration OwnershipはLaravel側に残し、
+Next.js側ではAuth.js連携に必要なSchema Mappingのみ定義する。
+
+Next.js側から`users` TableのSchema変更Migrationを生成しない。
 
 ---
 
@@ -746,6 +940,8 @@ Frontend表示用のTimezone変換は原則不要。
 
 Session内部の制御日時として扱う。
 
+ApplicationとDatabase間でTimezoneの解釈がずれないようにする。
+
 ---
 
 # 36. セキュリティ基本方針
@@ -754,11 +950,14 @@ Session内部の制御日時として扱う。
 - Production / StagingではSecure Cookie
 - HTTPSを利用する
 - Sanctum TokenをBrowserへ公開しない
+- Session TokenをLogへ出力しない
 - Sanctum TokenをLogへ出力しない
 - Sanctum TokenをDatabaseで暗号化する
 - 暗号鍵をRepositoryへ保存しない
-- Logout時にSessionとSanctum Tokenを両方失効する
+- `sanctum_token IS NULL`のSessionから認証付きBackend APIを呼び出さない
+- Credential連携済みSessionのLogout時はSessionとSanctum Tokenを両方失効する
 - User無効化時に既存Sessionも失効する
+- 期限切れSessionを認証済みとして扱わない
 
 ---
 
@@ -780,11 +979,16 @@ PostgreSQL
 
     User 1 : N AuthSession
 
+既存Application Userである`users`を利用する。
+
 ## Session Token
 
 `session_token`
 
 UNIQUEとする。
+
+Browser Cookieには
+Database Sessionを識別するSession Tokenのみを保持する。
 
 ## Session Expiration
 
@@ -798,17 +1002,41 @@ UNIQUEとする。
 
 を`auth_sessions`へ直接保持する。
 
+Auth.js Database Session基盤と
+Laravel Backend Credential連携は責務を分離する。
+
+`sanctum_token`はNULLを許可する。
+
+Laravel認証成功後に
+暗号化したSanctum Tokenを対象Sessionへ設定する。
+
+Backend API認証時は、
+
+    sanctum_token IS NULL
+
+のSessionをCredential連携済みとして扱わない。
+
 ## Token保存
 
 Application Level Encryptionを第一候補とする。
+
+暗号化・復号の実装は
+Backend Credential連携Taskで行う。
 
 ## Browser
 
 Sanctum Tokenを保持しない。
 
+Browserが保持する認証情報は
+Auth.js Session Cookieのみとする。
+
 ## Logout
 
+Credential連携済みSessionでは、
 Auth.js SessionとSanctum Tokenを両方失効する。
+
+`sanctum_token`がNULLの場合は
+Laravel Token失効処理は不要とする。
 
 ## Multiple Sessions
 
@@ -818,6 +1046,24 @@ Auth.js SessionとSanctum Tokenを両方失効する。
 
 使用しない。
 
+## Migration Ownership
+
+    Laravel
+    → Application / Laravel管理Table
+
+    Next.js
+    → auth_sessions
+
+既存`users` TableのSchema変更はLaravel側で管理し、
+Next.js側ではAuth.js連携用Mappingのみ保持する。
+
+## Auth.js関連Table
+
+MVPでは以下のみ使用する。
+
+    users
+    auth_sessions
+
 ## Credential専用Table
 
 MVPでは作成しない。
@@ -825,3 +1071,23 @@ MVPでは作成しない。
 ## OAuth関連Table
 
 MVPでは作成しない。
+
+## Task責務
+
+Auth.js Database Session基盤構築：
+
+    Session Store
+    Session Schema
+    Session Adapter
+    Session Cookie
+    Session取得
+    Session有効期限
+
+Backend Credential連携：
+
+    Laravel Login API
+    Application UserとのLogin連携
+    Sanctum Token取得
+    Sanctum Token暗号化
+    auth_sessionsへのToken保存
+    SessionとTokenのLifecycle連携
