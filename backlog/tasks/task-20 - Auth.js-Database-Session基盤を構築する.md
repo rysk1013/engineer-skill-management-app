@@ -1,10 +1,10 @@
 ---
 id: TASK-20
 title: Auth.js Database Session基盤を構築する
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-10-06 12:17'
-updated_date: '2026-10-06 12:18'
+updated_date: '2026-10-06 13:59'
 labels:
   - phase-2
   - frontend
@@ -51,3 +51,18 @@ Auth.jsのDatabase Session Strategyを利用し、PostgreSQL上のauth_sessions�
 - [ ] #6 Self review is completed
 - [ ] #7 Final Summary is completed
 <!-- DOD:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+1. Auth.js / Drizzle ORM / PostgreSQL AdapterをFrontendへ導入する
+2. Next.js側のDB接続基盤とDrizzle設定を追加する
+3. 既存usersテーブルとauth_sessionsテーブルのDrizzle Schemaを定義する
+4. auth_sessionsのMigrationをNext.js側Ownershipとして作成する
+5. Auth.jsへDrizzle AdapterとDatabase Session Strategyを設定する
+6. Session Cookie設定を既存セキュリティ方針に合わせる
+7. Next.js Server側からauth()でSessionを取得できる構成を追加する
+8. Database Session作成・取得・期限・Relation・Cookie設定のTestを追加する
+9. lint / typecheck / test / buildを実行する
+10. 必要な認証・DB設計ドキュメントを実装結果に合わせて更新する
+<!-- SECTION:PLAN:END -->
