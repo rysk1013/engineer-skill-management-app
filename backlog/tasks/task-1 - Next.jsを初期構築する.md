@@ -4,12 +4,12 @@ title: Next.jsを初期構築する
 status: Done
 assignee: []
 created_date: '2026-09-20 08:28'
-updated_date: '2026-09-22 15:52'
+updated_date: '2026-10-06 11:25'
 labels:
   - phase-0
   - frontend
   - infrastructure
-milestone: m-0
+milestone: Phase 0 - 開発基盤
 dependencies: []
 priority: high
 ordinal: 1000
