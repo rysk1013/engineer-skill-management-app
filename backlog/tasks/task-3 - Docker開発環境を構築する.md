@@ -4,12 +4,12 @@ title: Docker開発環境を構築する
 status: Done
 assignee: []
 created_date: '2026-09-20 08:28'
-updated_date: '2026-09-23 08:23'
+updated_date: '2026-10-06 11:25'
 labels:
   - phase-0
   - docker
   - infrastructure
-milestone: m-0
+milestone: Phase 0 - 開発基盤
 dependencies:
   - TASK-1
   - TASK-2
