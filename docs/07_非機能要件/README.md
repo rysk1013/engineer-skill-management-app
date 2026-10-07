@@ -33,7 +33,9 @@ PostgreSQL
 主要Technology:
 
 - Frontend / BFF: Next.js
-- Authentication: Auth.js
+- Application User Authentication: Laravel
+- Browser Session Management: Better Auth
+- Session / Credential Store: Redis
 - Backend: Laravel
 - BFF → Backend Authentication: Laravel Sanctum
 - Database: PostgreSQL
@@ -137,8 +139,9 @@ MVPの設計基準となる想定規模:
 以下をMVPから必須とする。
 
 - HTTPS
-- Auth.jsによるBrowser Authentication
-- PostgreSQL Session Store
+- LaravelによるApplication User Authentication
+- Better AuthによるBrowser Session Management
+- RedisによるSession / Backend Credential管理
 - Sanctum TokenによるBFF → Laravel Authentication
 - Backend Authorization
 - RBAC
