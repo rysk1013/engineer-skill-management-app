@@ -21,9 +21,11 @@ Application利用者の権限・担当社員・権限管理可否を管理する
 以下はAccess Control Domainそのものには含めない。
 
 - Password認証
-- Auth.js Session
+- Better Auth Session
+- Backend Credential
 - Laravel Sanctum Token
 - Session Cookie
+- Token Encryption
 
 これらはAuthentication / Infrastructureとして扱う。
 
@@ -488,10 +490,14 @@ Domain Method：
 
 Application Layerではさらに、
 
-- Auth.js Session失効
+- Better Auth Session失効
+- Backend Credential削除
 - Laravel Sanctum Token失効
 
 を行う。
+
+具体的な実行順序、再試行、部分失敗時Recoveryは
+Authentication詳細設計で扱う。
 
 ---
 
@@ -1493,7 +1499,8 @@ Laravel Policyを入口とし、
 
 以下はAccess Control Domainへ持ち込まない。
 
-- Auth.js Session
+- Better Auth Session
+- Backend Credential
 - Session Cookie
 - Sanctum Token
 - Token Encryption

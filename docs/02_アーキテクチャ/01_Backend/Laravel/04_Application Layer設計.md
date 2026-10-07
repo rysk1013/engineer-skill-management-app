@@ -634,15 +634,15 @@ interface ActorContext
 }
 ```
 
-Application LayerはLaravel AuthやSanctumなどの具体的な認証機構を知らない。
+Application LayerはBetter AuthやLaravel Auth、Sanctumなどの具体的な認証機構を知らない。
 
 ```text
-Auth.js / Sanctum / Laravel Auth
-            ↓
+Better Auth / Laravel Auth / Sanctum
+                 ↓
 Infrastructure / Presentation
-            ↓
+                 ↓
 ActorContext
-            ↓
+                 ↓
 Application
 ```
 

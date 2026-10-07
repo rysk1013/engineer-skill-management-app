@@ -604,7 +604,8 @@ Access Controlとは分離することを第一候補とする。
         ├── Login/
         └── Logout/
 
-Auth.js / Sanctumの技術詳細はInfrastructureへ置く。
+Better Auth / Laravel Sanctum / Redis / Backend Credentialなどの
+技術詳細はInfrastructureへ置く。
 
 ---
 

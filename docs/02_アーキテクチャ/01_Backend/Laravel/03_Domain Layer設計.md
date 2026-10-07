@@ -99,7 +99,7 @@ Application上のRole、Permissionおよび担当社員との関係に関する�
 
 認証ユーザーに関するDomain上の概念を扱う。
 
-Auth.js、Laravel Sanctum、Session、Tokenなどの具体的な認証技術はDomainには含めず、Infrastructure Detailとして扱う。
+Better Auth、Laravel Sanctum、Session、Backend Credential、Tokenなどの具体的な認証技術はDomainには含めず、Infrastructure Detailとして扱う。
 
 ---
 

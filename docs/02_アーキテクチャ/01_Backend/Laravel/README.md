@@ -170,7 +170,7 @@ API Resource
 - Application ResultをAPI ResourceでOpenAPI Responseへ変換します。
 - Eloquent ModelをAPI Responseへ直接公開しません。
 - Domain ExceptionにHTTP Statusを持たせず、PresentationでHTTP ErrorへMappingします。
-- BrowserとNext.js間はAuth.js Session、Next.jsとLaravel間はSanctumを使用します。
+- BrowserとNext.js間はBetter Auth Session、Next.jsとLaravel間はSanctumを使用します。
 
 ## Test方針
 

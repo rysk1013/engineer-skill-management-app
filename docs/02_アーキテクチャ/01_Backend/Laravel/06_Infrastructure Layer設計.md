@@ -906,7 +906,8 @@ Authentication CredentialとDomain上のUserを同一概念として扱わない
 
 ```text
 Sanctum Token
-Auth.js Session
+Better Auth Session
+Backend Credential
 Token Hash
 Session Identifier
 Authentication Credential
