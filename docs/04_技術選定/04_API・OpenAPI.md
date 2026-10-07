@@ -916,7 +916,8 @@ OpenAPI を API Contract の Source of Truth とする。
 
 以下を管理する。
 
-- Auth.js
+- Better Auth
+- Redis Session Store
 - Laravel Sanctum
 - BFF Authentication
 - Credential Management

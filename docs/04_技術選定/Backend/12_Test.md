@@ -1226,14 +1226,14 @@ Disabled User
 
 ---
 
-## 62. Auth.js
+## 62. Better Auth / Browser Session
 
-Auth.js Browser Session自体はNext.js BFF側の責務とする。
+Better Auth Browser Session自体はNext.js BFF側の責務とする。
 
 Laravel Backend Testでは、
 
 ```text
-Auth.js Login Flow
+Better Auth Sessionの作成・Lifecycle
 Browser Session Cookie
 ```
 
@@ -1933,7 +1933,7 @@ Logging / Error / Telemetry Boundaryでは必要に応じ以下が出力され�
 Password
 Authorization Header
 Sanctum Token
-Auth.js Session Token
+Better Auth Session Token
 Cookie
 Secret
 ```

@@ -40,7 +40,10 @@ PostgreSQL
 - Frontend / BFF: Next.js
 - Backend API: Laravel
 - Database: PostgreSQL
-- Authentication: Auth.js / Laravel Sanctum
+- Application User Authentication: Laravel
+- Browser Session Management: Better Auth
+- Session / Credential Store: Redis
+- Backend API Authentication: Laravel Sanctum
 - API Contract: OpenAPI
 - Container: Docker
 

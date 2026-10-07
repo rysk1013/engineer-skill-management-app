@@ -637,7 +637,7 @@ Status Codeだけでなく、
 
 ## 13.2 Session
 
-Auth.js Sessionが失効している場合は
+Better Auth Sessionが失効している場合は
 Authentication Flowへ誘導する。
 
 具体的なSession Handlingは

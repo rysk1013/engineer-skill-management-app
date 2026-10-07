@@ -119,7 +119,8 @@ API
 └── RFC 9457 Problem Details
 
 Authentication
-├── Auth.js
+├── Better Auth
+├── Redis Session Store
 └── Laravel Sanctum
 
 Authorization
@@ -167,7 +168,7 @@ CI / Automation
 └── GitHub Actions
 ```
 
-Auth.jsはBackend Packageではなく、BFFとのAuthentication Architectureを構成する関連技術として記載する。
+Better AuthおよびRedis Session StoreはBackend Packageではなく、BFFとのAuthentication Architectureを構成する関連技術として記載する。
 
 ---
 
@@ -175,13 +176,9 @@ Auth.jsはBackend Packageではなく、BFFとのAuthentication Architectureを�
 
 ```text
 Browser
-    ↓
-Next.js / Auth.js
-    ↓
-BFF
-    ↓
-Sanctum Bearer Token
-    ↓
+    ↓ Better Auth Session
+Next.js / BFF
+    ↓ Sanctum Bearer Token
 Laravel Backend
     ↓
 PostgreSQL
@@ -359,10 +356,12 @@ Authentication / Authorization Architectureを定義する。
 主な対象：
 
 ```text
-Auth.js
+Better Auth
+Redis Session Store
 Laravel Sanctum
+Backend Credential
 Bearer Token
-Token Lifecycle
+Session / Token Lifecycle
 Laravel Policy
 Role
 Employee Assignment
@@ -844,7 +843,7 @@ errors
 ```text
 Browser
     ↓
-Auth.js Session
+Better Auth Session
     ↓
 BFF
     ↓
