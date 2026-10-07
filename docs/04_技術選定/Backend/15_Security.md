@@ -46,7 +46,7 @@ Backend Securityを以下のLayerで構成する。
 
 ```text
 Authentication / Authorization
-    → Auth.js + Sanctum + Policy
+    → Better Auth + Redis + Sanctum + Policy
 
 Request Protection
     → Validation + Rate Limit + Resource Limit
@@ -133,7 +133,7 @@ Configuration
 ```text
 Browser
     ↓
-Auth.js Session
+Better Auth Session
     ↓
 Next.js BFF
     ↓
@@ -142,7 +142,7 @@ Sanctum Bearer Token
 Laravel Backend
 ```
 
-Laravel BackendはBrowser Login / Auth.js Session Managementを担当しない。
+Laravel BackendはBrowser Login / Better Auth Session Managementを担当しない。
 
 ---
 
@@ -187,7 +187,7 @@ auth:sanctum
 Authorization Header
 Bearer Token
 Sanctum Token
-Auth.js Session Token
+Better Auth Session Token
 Cookie
 Password
 API Key
@@ -833,7 +833,7 @@ Next.js BFF
 
 とする。
 
-Auth.js Cookie / SameSite / Request Origin等のSecurityはFrontend/BFF側設計と連携する。
+Better Auth Session Cookie / SameSite / Request Origin等のSecurityはFrontend/BFF側設計と連携する。
 
 ---
 
@@ -1024,7 +1024,7 @@ password
 password_hash
 remember_token
 Sanctum Token
-Auth.js Session Token
+Better Auth Session Token
 Secret
 Internal Credential
 ```
@@ -2025,7 +2025,7 @@ Object ID Manipulation
 | OWASP Top 10 | 基準として採用 |
 | OWASP API Security Top 10 | 基準として採用 |
 | OWASP ASVS | 基準として採用 |
-| Auth.js + Sanctum | 既存方針を維持 |
+| Better Auth + Redis + Sanctum | 現行方針を維持 |
 | Sanctum Bearer Token | 採用 |
 | BrowserへのSanctum Token公開 | 禁止 |
 | Laravel Policy | Authorization Boundaryとして採用 |
