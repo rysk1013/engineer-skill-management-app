@@ -1,10 +1,10 @@
 ---
 id: TASK-26
 title: Better Auth / Redis移行に伴う関連ドキュメントを横断更新する
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-07 08:17'
-updated_date: '2026-10-07 08:25'
+updated_date: '2026-10-07 10:02'
 labels:
   - phase-2
   - documentation
@@ -39,25 +39,25 @@ Archive・不採用案・変更履歴など、意図的に残す旧Auth.js記述
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 現行ドキュメントに残る旧Auth.js / PostgreSQL Database Session前提を横断検索し、修正対象を特定できている
-- [ ] #2 現行仕様と矛盾するAuth.js / PostgreSQL Session関連記述がBetter Auth / Redis / Laravel Sanctum構成へ更新されている
-- [ ] #3 Application User AuthenticationはLaravel、Browser Session ManagementはBetter Auth、Session StoreはRedisとして一貫して記述されている
-- [ ] #4 Backend CredentialはBetter Auth Sessionと分離し、Redisへ暗号化保存する方針が関連ドキュメントで一貫している
-- [ ] #5 Next.jsからPostgreSQLへ直接接続しない方針が関連ドキュメントで一貫している
-- [ ] #6 旧ドキュメントパスやBacklog Referencesが現行ドキュメントへ更新されている
-- [ ] #7 Archive・不採用案・過去の変更履歴として意図的に残すAuth.js記述と修正漏れを区別できている
-- [ ] #8 最終横断検索で現行仕様と矛盾する旧Auth.js / PostgreSQL Session記述が残っていない
+- [x] #1 現行ドキュメントに残る旧Auth.js / PostgreSQL Database Session前提を横断検索し、修正対象を特定できている
+- [x] #2 現行仕様と矛盾するAuth.js / PostgreSQL Session関連記述がBetter Auth / Redis / Laravel Sanctum構成へ更新されている
+- [x] #3 Application User AuthenticationはLaravel、Browser Session ManagementはBetter Auth、Session StoreはRedisとして一貫して記述されている
+- [x] #4 Backend CredentialはBetter Auth Sessionと分離し、Redisへ暗号化保存する方針が関連ドキュメントで一貫している
+- [x] #5 Next.jsからPostgreSQLへ直接接続しない方針が関連ドキュメントで一貫している
+- [x] #6 旧ドキュメントパスやBacklog Referencesが現行ドキュメントへ更新されている
+- [x] #7 Archive・不採用案・過去の変更履歴として意図的に残すAuth.js記述と修正漏れを区別できている
+- [x] #8 最終横断検索で現行仕様と矛盾する旧Auth.js / PostgreSQL Session記述が残っていない
 <!-- AC:END -->
 
 ## Definition of Done
 <!-- DOD:BEGIN -->
-- [ ] #1 Acceptance Criteria are satisfied
-- [ ] #2 Required tests pass
-- [ ] #3 Required lint and static analysis pass
-- [ ] #4 Documentation is updated if needed
-- [ ] #5 No temporary or debug code remains
-- [ ] #6 Self review is completed
-- [ ] #7 Final Summary is completed
+- [x] #1 Acceptance Criteria are satisfied
+- [x] #2 Required tests pass
+- [x] #3 Required lint and static analysis pass
+- [x] #4 Documentation is updated if needed
+- [x] #5 No temporary or debug code remains
+- [x] #6 Self review is completed
+- [x] #7 Final Summary is completed
 <!-- DOD:END -->
 
 ## Implementation Plan
@@ -74,3 +74,15 @@ Archive・不採用案・変更履歴など、意図的に残す旧Auth.js記述
 9. 最終横断検索を実施し、残存記述を意図的なものと修正漏れに分類する
 10. git diff --checkとSelf Reviewを実施する
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Better Auth / Redisへの認証基盤変更に伴い、Architecture、System Design、技術選定、MVP実装計画、開発・運用、非機能要件、UI設計、Project README、Backlog Referencesを横断確認・更新した。
+
+旧Auth.js / PostgreSQL Database Session前提の現行仕様上の矛盾を解消し、Application User AuthenticationはLaravel、Browser Session ManagementはBetter Auth、Session StoreはRedis、Backend CredentialはBetter Auth Sessionと分離してRedisへ暗号化保存する責務へ統一した。
+
+Next.jsからPostgreSQLへ直接接続しない方針、Session / Backend CredentialのNamespace・ACL分離、旧ドキュメントパスおよびBacklog Referencesも確認・更新した。
+
+最終横断検索では、残存するAuth.js / PostgreSQL Session記述が不採用案・変更履歴・過去Taskの記録・PostgreSQL接続Session等の意図的な記述であることを確認した。
+<!-- SECTION:FINAL_SUMMARY:END -->
