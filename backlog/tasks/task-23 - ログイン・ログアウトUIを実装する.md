@@ -4,6 +4,7 @@ title: ログイン・ログアウトUIを実装する
 status: To Do
 assignee: []
 created_date: '2026-10-06 12:21'
+updated_date: '2026-10-07 04:16'
 labels:
   - phase-2
   - frontend
@@ -13,8 +14,9 @@ milestone: m-2
 dependencies:
   - TASK-22
 references:
-  - docs/03_システム設計/02_認証・認可/02_Next.js-Auth.js設計.md
-  - docs/08_UI設計/README.md
+  - docs/03_システム設計/02_認証・認可/01_認証全体設計.md
+  - docs/03_システム設計/02_認証・認可/02_Next.js-Better-Auth設計.md
+  - docs/08_UI設計/07_画面設計/18_ログイン.md
 priority: high
 type: feature
 ordinal: 23000
@@ -23,7 +25,7 @@ ordinal: 23000
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Phase 1のUI設計に従い、Auth.js SessionとBFF認証連携を利用したログイン・ログアウトUIを実装する。認証状態に応じた画面遷移を含め、BrowserへBackend Credentialを露出しない構成とする。
+Phase 1のUI設計に従い、Better Auth SessionとBFF認証連携を利用したログイン・ログアウトUIを実装する。認証状態に応じた画面遷移を含め、BrowserへBackend Credentialを露出しない構成とする。
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
