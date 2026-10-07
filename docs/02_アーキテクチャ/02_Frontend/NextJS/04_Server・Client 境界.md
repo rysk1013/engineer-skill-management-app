@@ -521,7 +521,7 @@ Browserから明示的に再取得する必要がある場合。
 
 ### Authentication関連Endpoint
 
-Auth.js等がHTTP Endpointを必要とする場合。
+Better Auth等がHTTP Endpointを必要とする場合。
 
 ### External Callback
 
@@ -881,10 +881,10 @@ Server / Client Boundaryを分かりにくくする構造は採用しない。
 
 認証境界を以下とする。
 
-```text id="5n52ne"
+```text
 Browser
    │
-   │ Auth.js Session
+   │ Better Auth Session Cookie
    ▼
 Next.js Server
    │
@@ -893,9 +893,19 @@ Next.js Server
 Laravel API
 ```
 
-BrowserはAuth.js Sessionのみを扱う。
+BrowserはBetter Auth Session Cookieのみを認証情報として扱う。
 
-Laravel Sanctum TokenはNext.js Server内で管理する。
+Better Auth SessionはRedisで管理する。
+
+Laravel Sanctum TokenはNext.js Server内で管理し、
+Browserへ公開しない。
+
+Backend CredentialはBetter Auth Sessionと分離し、
+RedisへApplication Level Encryptionして保存する。
+
+Application User AuthenticationはLaravel Backendが担当する。
+
+Next.jsからPostgreSQLへ直接接続しない。
 
 ---
 
@@ -1183,7 +1193,7 @@ API Client
 │ Browser                                  │
 │                                          │
 │ Client Component                         │
-│ Auth.js Session                          │
+│ Better Auth Session Cookie               │
 └───────────────────┬──────────────────────┘
                     │
                     ▼
@@ -1296,8 +1306,11 @@ FrontendのServer / Client境界として、以下を正式採用する。
 - Server Component / Server Action / Route HandlerからLaravelへの通信を共通API Clientへ集約する
 - BrowserからLaravel APIへの直接アクセスは禁止する
 - 検索・Filter・PaginationはURL State + Server Componentを優先する
-- BrowserはAuth.js Sessionを扱う
+- BrowserはBetter Auth Session Cookieを扱う
+- Better Auth SessionはRedisで管理する
+- Backend CredentialはBetter Auth Sessionと分離してRedisへ暗号化保存する
 - Next.js ServerのみLaravel Sanctum Tokenを扱う
+- Next.jsからPostgreSQLへ直接接続しない
 - Secretを含むEnvironment VariableはServer専用とする
 - Next.js側でも必要なAccess Controlを行うが、Backend Authorizationも必ず維持する
 - Frontend / BFFはUX Assistanceを担当し、Business CorrectnessはLaravel Domainが保証する

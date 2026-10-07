@@ -727,7 +727,8 @@ SecretをGit RepositoryへCommitしない。
 
 対象例：
 
-- Auth.js Secret
+- Better Auth Secret
+- Backend Credential暗号化用Secret
 - Laravel `APP_KEY`
 - Database Password
 - Production Credential

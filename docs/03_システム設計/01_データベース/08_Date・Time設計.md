@@ -78,12 +78,11 @@ PostgreSQL上の表記：
 
 - created_at
 - updated_at
-- Session Expiration
 - Token Expiration
 - Token Last Used
 - Log日時
 
-Database SessionのTimezoneもUTCを基本とする。
+PostgreSQLで管理する日時はUTCを基本とする。
 
 ---
 
@@ -488,16 +487,24 @@ Application固有の表示Timezoneは、
 
 ---
 
-# 18. Auth.js Session
+# 18. Better Auth Session
 
-Auth.js Session関連日時はTimestampとして扱う。
+Better Auth SessionはRedisで管理する。
+
+Session関連日時はUTC基準で扱う。
 
 対象例：
 
 - Session Expiration
 - Session作成日時
+- Session更新日時
 
-UTC基準とする。
+Better Auth SessionはPostgreSQLへ保存しないため、
+PostgreSQLの`timestamp` / `timestamptz`設計対象とはしない。
+
+Session ExpirationとRedis TTLは整合させる。
+
+具体的なSession Lifetime / Redis TTLは認証詳細設計で決定する。
 
 Browserへは必要最小限のSession情報のみ公開する。
 

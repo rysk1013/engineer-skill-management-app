@@ -632,7 +632,7 @@ Lock保持時間を短くする。
 
 ---
 
-# 35. Authentication Token失効との関係
+# 35. Authentication State失効との関係
 
 User無効化UseCaseでは、
 
@@ -640,14 +640,17 @@ User無効化UseCaseでは、
 
 と、
 
-    Auth.js Session削除
+    Better Auth Session失効
+    Backend Credential削除
     Sanctum Token失効
 
 が関係する。
 
-ただしNext.js側Session削除は別Applicationへの通信になる可能性がある。
+ただしBetter Auth Session失効やBackend Credential削除は、
+Next.js / Redis側の処理を伴う可能性がある。
 
-Database Transactionに外部Network Callを含めない設計を第一候補とする。
+Database Transactionに外部Network Callや
+Authentication Infrastructureへの副作用を含めない設計を第一候補とする。
 
 ---
 
@@ -659,12 +662,19 @@ Database Transactionに外部Network Callを含めない設計を第一候補と
         ↓
     Commit
         ↓
-    External Side Effect
+    Authentication / External Side Effect
 
 とする。
 
-ただし外部処理失敗時の整合性については
-Authentication詳細設計で再検討する。
+Authentication Side Effectの例：
+
+- Better Auth Session失効
+- Backend Credential削除
+- Sanctum Token失効
+
+外部処理失敗時の整合性、
+再試行、部分失敗時Recoveryは
+Authentication詳細設計で扱う。
 
 ---
 
@@ -702,7 +712,9 @@ MVPでは導入しない。
 
 - External Notification
 - 外部API
-- Auth.jsへのHTTP Request
+- Better Auth Session失効
+- Backend Credential削除
+- Sanctum Token失効
 - 非同期処理
 
 ただし具体的な認証連携方式によって変わる。

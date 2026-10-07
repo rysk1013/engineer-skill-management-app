@@ -95,7 +95,7 @@ Branch、Commit、Pull Request、Mergeなどの詳細については[`07_Git・G
 
 | Container | 主な構成 |
 |---|---|
-| `frontend` | Node.js、Next.js、TypeScript、Auth.js |
+| `frontend` | Node.js、Next.js、TypeScript、Better Auth |
 | `backend` | PHP、Composer、Laravel、Sanctum |
 | `postgres` | PostgreSQL |
 

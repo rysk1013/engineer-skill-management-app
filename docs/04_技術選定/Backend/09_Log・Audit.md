@@ -789,7 +789,7 @@ Application Log / Security Log / Audit Logすべてで以下を記録禁止と�
 ```text id="sa8spy"
 Password
 Sanctum Token
-Auth.js Session Token
+Better Auth Session Token
 Cookie
 Authorization Header
 API Key

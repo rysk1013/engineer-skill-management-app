@@ -266,32 +266,41 @@ Authentication自体はGeneric Subdomainとして扱う。
 
 対象：
 
-- Auth.js
+- Better Auth
 - Laravel Sanctum
 - Password Authentication
 - Session
+- Backend Credential
 
 独自の認証アルゴリズムをDomainとして作らない。
 
 既存Framework / Libraryを利用する。
+
+Application User AuthenticationはLaravelが担当し、
+Browser Session ManagementはBetter Authが担当する。
 
 ---
 
 # 12. ContextとInfrastructure
 
 Bounded Contextは、
-Database Table単位では決めない。
+Database TableやStorage単位では決めない。
 
 例えば：
 
     users
-    auth_sessions
     personal_access_tokens
 
-が存在していても、
+がPostgreSQLに存在し、
 
-    Auth.js Session
+    Better Auth Session
+    Backend Credential
+
+がRedisに存在していても、
+
+    Better Auth Session
     Sanctum Token
+    Backend Credential
 
 はInfrastructure / Generic Authentication寄り。
 
@@ -299,10 +308,17 @@ Database Table単位では決めない。
 
     User Role
     Assignment
+    Permission Rule
 
 はAccess Control Domain。
 
-技術的なTableとDomain Boundaryを混同しない。
+Storage方式や技術的なTableとDomain Boundaryを混同しない。
+
+Better Auth SessionやBackend Credentialを
+Access Control DomainのEntityとして扱わない。
+
+Application User、Role、Assignmentなどの
+業務上の概念とAuthentication Infrastructureを分離する。
 
 ---
 

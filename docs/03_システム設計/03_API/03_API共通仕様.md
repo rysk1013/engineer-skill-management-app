@@ -629,7 +629,7 @@ Laravel用TokenはNext.js BFFで管理し、Browserへ公開しません。
 
 ```text
 Browser
-   │ Auth.js Session
+   │ Better Auth Session
    ▼
 Next.js BFF
    │ Sanctum Bearer Token

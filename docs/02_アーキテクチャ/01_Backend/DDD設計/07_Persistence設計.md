@@ -13,7 +13,9 @@ Framework・Database・外部技術の詳細を担当する。
 - Transaction
 - Database Lock
 - Laravel Sanctum
-- Auth.js Session Persistence
+- Better Auth Session
+- Backend Credential
+- Redis
 - Logging
 - External API
 
@@ -942,7 +944,8 @@ Lock保持時間を短くする。
 User無効化時には、
 
 - User DB更新
-- Auth.js Session失効
+- Better Auth Session失効
+- Backend Credential削除
 - Sanctum Token失効
 
 が必要になる。
@@ -957,7 +960,16 @@ DB Transactionと外部副作用の境界は分離する。
         ↓
     Authentication Side Effect
 
-具体的な失敗時RecoveryはAuthentication詳細設計で扱う。
+Authentication Side Effectには、
+
+- Better Auth Sessionの失効
+- Redis上のBackend Credential削除
+- Sanctum Tokenの失効
+
+を含む。
+
+具体的な実行順序、再試行、部分失敗時Recoveryは
+Authentication詳細設計で扱う。
 
 ---
 

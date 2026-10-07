@@ -356,7 +356,8 @@ Phase 1はUI設計を対象とし、Frontendの具体的な実装は後続Phase�
 - Server Component / Client Componentの具体的な分割
 - API接続
 - BFF実装
-- Auth.jsとの接続処理
+- Better Authとの接続処理
+- Backend認証との連携処理
 - Form処理実装
 - Frontendテスト実装
 

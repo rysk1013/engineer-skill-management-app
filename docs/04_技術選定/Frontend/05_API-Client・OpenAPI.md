@@ -743,7 +743,7 @@ Next.js Route Handlerを経由しない。
 
 Authentication CredentialはServer-sideで管理する。
 
-    Auth.js Session
+    Better Auth Session
           ↓
       Next.js Server
           ↓

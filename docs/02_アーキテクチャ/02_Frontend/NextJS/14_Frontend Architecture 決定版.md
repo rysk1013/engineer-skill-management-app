@@ -6,7 +6,7 @@
 
 対象となる設計書は以下とする。
 
-```text id="v4xs2z"
+```text
 01_Frontend Architecture 全体方針.md
 02_ディレクトリ構成.md
 03_レイヤー・依存関係.md
@@ -30,7 +30,7 @@
 
 本Frontend Architectureは以下を中核とする。
 
-```text id="aosbia"
+```text
 Server Component First
         +
 Feature-based Architecture
@@ -42,7 +42,7 @@ OpenAPI Generated Client
 
 Frontend全体のOrientationは以下とする。
 
-```text id="y7o8w0"
+```text
 Backend
 =
 Domain-oriented Architecture
@@ -62,7 +62,7 @@ Next.jsはFrontend + BFFとして利用する。
 
 Next.jsの主な責務：
 
-```text id="rwi2so"
+```text
 UI Rendering
 Routing
 Layout
@@ -83,7 +83,7 @@ Next.jsをBusiness DomainのAuthorityとはしない。
 
 責務を以下のように分ける。
 
-```text id="ti7opq"
+```text
 Next.js
 =
 Frontend Convenience
@@ -105,12 +105,12 @@ FrontendでBusiness RuleをUXへ反映することは許可するが、最終保
 
 ## 5. 全体Architecture
 
-```text id="vhmiwa"
+```text
 ┌──────────────────────────────────────┐
 │ Browser                              │
 │                                      │
-│ UI Interaction                      │
-│ Auth.js Session                     │
+│ UI Interaction                       │
+│ Better Auth Session Cookie           │
 └──────────────────┬───────────────────┘
                    │
                    ▼
@@ -118,11 +118,13 @@ FrontendでBusiness RuleをUXへ反映することは許可するが、最終保
 │ Next.js                              │
 │                                      │
 │ App Router                           │
-│ Server Components                   │
-│ Client Components                   │
+│ Server Components                    │
+│ Client Components                    │
 │ Server Actions                       │
 │ Route Handlers                       │
-│ Auth.js                              │
+│ Better Auth                          │
+│ Browser Session Management           │
+│ Backend Credential Management        │
 │ Frontend Authorization               │
 │ BFF                                  │
 └──────────────────┬───────────────────┘
@@ -163,7 +165,7 @@ BrowserからLaravel APIを直接呼び出す構成は禁止する。
 
 禁止：
 
-```text id="nwb1hx"
+```text
 Browser
   ↓
 Laravel API
@@ -171,7 +173,7 @@ Laravel API
 
 基本：
 
-```text id="0s2y02"
+```text
 Browser
   ↓
 Next.js
@@ -187,10 +189,10 @@ Laravel Credential / Sanctum TokenをBrowserへ露出させない。
 
 Authentication Boundaryを以下の2つに分離する。
 
-```text id="jvl2bu"
+```text
 Browser
    │
-   │ Auth.js Session
+   │ Better Auth Session Cookie
    ▼
 Next.js
    │
@@ -201,17 +203,33 @@ Laravel API
 
 責務：
 
-```text id="k0evzb"
+```text
 Browser ↔ Next.js
 =
-Auth.js Session
+Better Auth Session
 
 Next.js ↔ Laravel
 =
 Sanctum Token
 ```
 
-Sanctum TokenはServer-sideのみで扱う。
+Application User AuthenticationはLaravelが担当する。
+
+Browser Session ManagementはBetter Authが担当する。
+
+Better Auth Sessionの保存先はRedisとする。
+
+Backend CredentialはBetter Auth Sessionと分離し、
+RedisへApplication Level Encryptionして保存する。
+
+Better Auth SessionとBackend CredentialはNamespaceとACLで分離する。
+
+Sanctum TokenはServer-sideのみで扱い、Browserへ公開しない。
+
+Next.jsからPostgreSQLへ直接接続しない。
+
+Laravel Authentication結果からBetter Auth Sessionを成立させる具体方式は、
+Better Authの公式APIとExtension Pointを確認して決定する。
 
 ---
 
@@ -219,7 +237,7 @@ Sanctum TokenはServer-sideのみで扱う。
 
 Authorizationは二段階とする。
 
-```text id="u3dqq9"
+```text
 Next.js Authorization
 =
 UX / Early Rejection
@@ -231,7 +249,7 @@ Security Authority
 
 Frontendでは、
 
-```text id="er390b"
+```text
 Buttonを見せない
 Navigationを見せない
 Read-onlyにする
@@ -246,7 +264,7 @@ Forbidden UIを表示する
 
 ## 9. AuthenticationとAuthorizationを分離する
 
-```text id="yv26q8"
+```text
 Authentication
 =
 誰か
@@ -258,11 +276,15 @@ Authorization
 
 を明確に分離する。
 
-Auth.js SessionをAuthenticationのSource of Truthとする。
+Browser Session StateのSource of TruthはBetter Authとする。
+
+Application User AuthenticationのSource of TruthはLaravelとする。
+
+業務上の最終AuthorizationはLaravelが担当する。
 
 Frontend独自の、
 
-```text id="kn7nj6"
+```text
 isLoggedIn Store
 currentUser Store
 authStore
@@ -276,7 +298,7 @@ authStore
 
 Server ComponentをDefaultとする。
 
-```text id="7yrlui"
+```text
 Component
  ↓
 Client機能が必要？
@@ -298,7 +320,7 @@ Page全体を安易にClient Component化しない。
 
 Client Componentは主に以下で利用する。
 
-```text id="f8a81k"
+```text
 useState
 useEffect
 useReducer
@@ -319,7 +341,7 @@ Local UI State
 
 通常のRead Flowは以下とする。
 
-```text id="f1eqap"
+```text
 Server Component
       ↓
 Feature Server Query
@@ -333,7 +355,7 @@ Server ComponentからLaravelへアクセスするためにRoute Handlerを経�
 
 避ける：
 
-```text id="wcfjsm"
+```text
 Server Component
       ↓
 Route Handler
@@ -347,7 +369,7 @@ Laravel API
 
 Client Interaction後に追加Readが必要な場合は以下とする。
 
-```text id="ig70ih"
+```text
 Client Component
       ↓
 Route Handler
@@ -359,7 +381,7 @@ Laravel API
 
 代表例：
 
-```text id="emkjj7"
+```text
 Autocomplete
 Infinite Scroll
 Polling
@@ -374,7 +396,7 @@ MVPではClient-side Readを必要最小限とする。
 
 MutationはServer Actionを第一候補とする。
 
-```text id="bfo01c"
+```text
 UI
  ↓
 Server Action
@@ -400,7 +422,7 @@ Route HandlerはHTTP Endpoint自体が必要な場合のみ利用する。
 
 代表例：
 
-```text id="01ubj0"
+```text
 Client-side Fetch
 Auth Endpoint
 External Callback
@@ -419,7 +441,7 @@ Proxy Response
 
 FrontendはFeature単位で構成する。
 
-```text id="zpsgm4"
+```text
 features/
 ├── employees/
 ├── skills/
@@ -433,7 +455,7 @@ BackendのLayer構造をFrontendへ複製しない。
 
 ## 17. 基本Directory
 
-```text id="xkpx3l"
+```text
 src/
 ├── app/
 ├── features/
@@ -445,7 +467,7 @@ src/
 
 責務：
 
-```text id="kzghw5"
+```text
 app/
 =
 Framework Boundary
@@ -477,7 +499,7 @@ Global Style
 
 Feature内部では必要に応じて以下を利用する。
 
-```text id="yn0hh6"
+```text
 features/<feature>/
 ├── components/
 ├── server/
@@ -496,7 +518,7 @@ features/<feature>/
 
 Feature外から利用する場合、原則としてFeature Public APIを利用する。
 
-```text id="apnwbh"
+```text
 features/employees/index.ts
 ```
 
@@ -510,7 +532,7 @@ Server-only ExportはClient-safe Public APIと分離する。
 
 必要に応じて、
 
-```text id="ag0ijp"
+```text
 features/employees/
 ├── index.ts
 └── server/
@@ -528,7 +550,7 @@ features/employees/
 
 最終Dependency Graphを以下とする。
 
-```text id="6s1ggd"
+```text
 app
  ├──→ features
  ├──→ components
@@ -557,7 +579,7 @@ types
 
 以下を正式なRuleとする。
 
-```text id="w0n3p6"
+```text
 Feature does not know app
 
 Shared does not know Feature
@@ -577,7 +599,7 @@ Circular Dependencyは禁止
 
 Feature AからFeature Bの内部実装へ直接依存することを原則避ける。
 
-```text id="wzsrpy"
+```text
 Feature A
   ×
 Feature B Internal
@@ -591,7 +613,7 @@ Feature B Internal
 
 Laravel API ContractはOpenAPIをSource of Truthとする。
 
-```text id="l7y40w"
+```text
 OpenAPI
  ↓
 Generated Client / Types
@@ -605,7 +627,7 @@ LaravelからFrontend型を生成する方式にはしない。
 
 ## 25. OpenAPI変更Flow
 
-```text id="sr4chp"
+```text
 OpenAPI変更
  ↓
 Contract Review
@@ -625,7 +647,7 @@ Contract変更を先に明示する。
 
 Generated Codeは以下へ配置する。
 
-```text id="48nwbc"
+```text
 lib/
 └── api/
     └── generated/
@@ -637,7 +659,7 @@ Generated Codeは手動編集禁止とする。
 
 ## 27. Handwritten API Client
 
-```text id="r93a95"
+```text
 lib/
 └── api/
     ├── generated/
@@ -654,7 +676,7 @@ Handwritten ClientをGenerated ClientとFrontend Featureの間のAdapterとす�
 
 API Clientは以下を担当する。
 
-```text id="y8xwzs"
+```text
 Base URL
 Common Header
 Sanctum Token Injection
@@ -672,7 +694,7 @@ Business Ruleは持たない。
 
 Laravel API CommunicationをFeatureごとのRaw `fetch`へ散在させない。
 
-```text id="fhlq4y"
+```text
 Feature
  ↓
 Common API Client
@@ -690,7 +712,7 @@ Sanctum Token InjectionはAPI Clientへ集約する。
 
 禁止：
 
-```text id="2bx0kf"
+```text
 getEmployee(token, employeeId)
 ```
 
@@ -712,7 +734,7 @@ Frontendで同じAPI DTOを再定義しない。
 
 Frontendでは、
 
-```text id="qq8t0h"
+```text
 API DTO
 +
 View Model
@@ -724,7 +746,7 @@ UI State
 
 Backendの、
 
-```text id="kg98bj"
+```text
 Aggregate
 Entity
 Value Object
@@ -741,7 +763,7 @@ Presentation上意味のある変換がある場合のみView Modelを利用す�
 
 例：
 
-```text id="jb9mvt"
+```text
 Date Formatting
 Label Mapping
 Status Presentation
@@ -757,7 +779,7 @@ Grouping
 
 DTO → View Model変換が意味を持つ場合のみMapperを配置する。
 
-```text id="cz8dnv"
+```text
 features/<feature>/mappers/
 ```
 
@@ -769,7 +791,7 @@ Business RuleをMapperへ置かない。
 
 Stateは以下の優先順位で扱う。
 
-```text id="md4qt6"
+```text
 1. Server State
 2. URL State
 3. Form State
@@ -786,7 +808,7 @@ Stateは以下の優先順位で扱う。
 
 以下はServer Stateとする。
 
-```text id="w90bdg"
+```text
 Employee
 Skill
 SkillCategory
@@ -805,7 +827,7 @@ Laravel API / PostgreSQLをSource of Truthとする。
 
 以下はURL Stateを優先する。
 
-```text id="bvv0k0"
+```text
 Search
 Filter
 Sort
@@ -815,7 +837,7 @@ Navigationに意味のあるTab
 
 例：
 
-```text id="hy1aqv"
+```text
 /employees?keyword=php&department=3&page=2
 ```
 
@@ -825,7 +847,7 @@ Navigationに意味のあるTab
 
 Form StateはFeature / Form Scopeへ閉じ込める。
 
-```text id="r9xk1e"
+```text
 Input
 Touched
 Dirty
@@ -841,7 +863,7 @@ Global Storeへ置かない。
 
 以下は最も近いClient Componentが所有する。
 
-```text id="t4dxwr"
+```text
 Dialog
 Dropdown
 Accordion
@@ -856,7 +878,9 @@ Preview
 
 ContextはClient Tree内で本当に共有が必要なStateだけに利用する。
 
-Server StateやAuth.js Sessionを独自Contextへ複製しない。
+Server StateやBetter Auth Sessionを独自Contextへ複製しない。
+
+Backend CredentialもClient ContextやGlobal Stateへ保存しない。
 
 ---
 
@@ -866,7 +890,7 @@ Redux / Zustand等はMVPでは採用しない。
 
 以下が明確になった場合に再検討する。
 
-```text id="p1qzws"
+```text
 多数の離れたClient Component間共有
 RouteをまたぐClient State
 複雑なClient Workflow
@@ -881,7 +905,7 @@ TanStack Query / SWR等はMVPでは採用しない。
 
 以下が増えた場合に再検討する。
 
-```text id="ic4qry"
+```text
 Polling
 Background Refetch
 Infinite Scroll
@@ -894,7 +918,7 @@ Optimistic Update
 
 ## 43. Validation全体像
 
-```text id="r25efn"
+```text
 Browser
  ↓
 Form State
@@ -916,7 +940,7 @@ Laravel Domain
 
 ## 44. Validation責務
 
-```text id="ux5gh4"
+```text
 Frontend Validation
 =
 UX / Input Assistance
@@ -938,7 +962,7 @@ Frontend ValidationをSecurity Boundaryにはしない。
 
 Frontend SchemaはFeature内へ配置する。
 
-```text id="vy57cm"
+```text
 features/<feature>/schemas/
 ```
 
@@ -952,7 +976,7 @@ SchemaはFrontend UX / Parsing用であり、OpenAPI Schemaの機械的複製で
 
 Form ModelとAPI Request DTOが異なることを許可する。
 
-```text id="u648rs"
+```text
 Form State
  ↓
 Validation
@@ -978,7 +1002,7 @@ Client-side Validationが存在しても、Server Actionで必ず再Validation�
 
 Frontendでは以下をUXとして反映する。
 
-```text id="d78xtp"
+```text
 未経験
 → Level 1のみ
 
@@ -1003,7 +1027,7 @@ Frontendでは以下をUXとして反映する。
 
 Errorを大きく以下へ分ける。
 
-```text id="pdl6gz"
+```text
 Expected Error
 Unexpected Error
 ```
@@ -1016,7 +1040,7 @@ Unexpected ErrorはError Boundary + Loggingへ流す。
 
 ## 50. HTTP Error Mapping
 
-```text id="d4p3r9"
+```text
 400
 → Bad Request / Contract Error
 
@@ -1048,7 +1072,7 @@ Status Semanticを維持する。
 
 ## 51. Error Normalization
 
-```text id="e6d4yd"
+```text
 Laravel Error
       ↓
 Generated Client / Transport Error
@@ -1066,7 +1090,7 @@ Transport固有ErrorをFeatureへ漏らさない。
 
 可能な場合、
 
-```text id="djm4lm"
+```text
 EMPLOYEE_NOT_FOUND
 PERMISSION_DENIED
 EMPLOYEE_SKILL_CONFLICT
@@ -1083,7 +1107,7 @@ Raw Message StringでControl Flowを分岐しない。
 
 用途ごとに使い分ける。
 
-```text id="cl0s59"
+```text
 Field Error
 Inline Error
 Forbidden UI
@@ -1099,7 +1123,7 @@ Global Error
 
 ## 54. Error Boundary
 
-```text id="2yct9c"
+```text
 error.tsx
 =
 Route Segment Unexpected Error
@@ -1123,7 +1147,7 @@ Mutationへ無条件Retryを行わない。
 
 ReadについてのみTransient Failure時にBounded Retryを検討できる。
 
-```text id="c00vmk"
+```text
 400 / 401 / 403 / 404 / 409 / 422
 → 原則Retryしない
 ```
@@ -1132,7 +1156,7 @@ ReadについてのみTransient Failure時にBounded Retryを検討できる。
 
 ## 56. Cache基本方針
 
-```text id="a5ghqp"
+```text
 Default
 =
 Dynamic / Fresh Data
@@ -1148,7 +1172,7 @@ LaravelをSource of Truthとする。
 
 ## 57. Cacheの責務
 
-```text id="4o434a"
+```text
 Laravel
 =
 Business Data Source of Truth
@@ -1166,7 +1190,7 @@ CacheをAuthorization / Business CorrectnessのAuthorityにはしない。
 
 MVPでは以下を基本Dynamicとする。
 
-```text id="oo9suf"
+```text
 Employee
 EmployeeSkill
 Permission
@@ -1184,7 +1208,7 @@ Department
 
 Performance Measurement後、最初の候補は比較的StableなMaster Dataとする。
 
-```text id="kfii14"
+```text
 SkillCategory
 Skill Master
 Department
@@ -1200,7 +1224,7 @@ User / Permissionに依存するDataを安全性確認なしで共有Cacheへ入
 
 以下をCache Key / Cache Dataへ利用しない。
 
-```text id="pafcvo"
+```text
 Sanctum Token
 Session Token
 Cookie
@@ -1213,7 +1237,7 @@ Credential
 
 ## 61. Cache Invalidation
 
-```text id="86ydh8"
+```text
 Mutation
  ↓
 Laravel Success
@@ -1231,7 +1255,7 @@ Laravel Success前にInvalidationしない。
 
 API ClientではなくFeature Action / Mutation BoundaryがAffected Cacheを判断する。
 
-```text id="rc51j0"
+```text
 Feature Action
  ↓
 API Client
@@ -1247,7 +1271,7 @@ Cache Invalidation
 
 Next.jsの、
 
-```text id="flr5y4"
+```text
 use cache
 revalidatePath
 revalidateTag
@@ -1264,7 +1288,7 @@ updateTag
 
 UIを以下の3種類へ分類する。
 
-```text id="7xla4n"
+```text
 App-level UI
 Feature UI
 Shared UI
@@ -1276,13 +1300,13 @@ Shared UI
 
 Feature固有UIは以下へ配置する。
 
-```text id="xgxu4c"
+```text
 features/<feature>/components/
 ```
 
 例：
 
-```text id="621ig9"
+```text
 EmployeeTable
 EmployeeForm
 SkillSelector
@@ -1295,13 +1319,13 @@ PermissionMatrix
 
 Feature非依存UIは以下へ配置する。
 
-```text id="ewz63l"
+```text
 components/ui/
 ```
 
 例：
 
-```text id="jm445a"
+```text
 Button
 Input
 Select
@@ -1318,7 +1342,7 @@ Pagination
 
 Shared UIは以下を知らない。
 
-```text id="me587j"
+```text
 Employee
 Skill
 Permission
@@ -1334,13 +1358,13 @@ Generic Presentationへ限定する。
 
 Application Layoutは以下へ配置する。
 
-```text id="b420b7"
+```text
 components/layout/
 ```
 
 例：
 
-```text id="6pxfjr"
+```text
 Header
 Sidebar
 PageContainer
@@ -1351,7 +1375,7 @@ PageHeader
 
 ## 69. UI Composition
 
-```text id="748nc0"
+```text
 app
  ↓
 Feature Component
@@ -1369,7 +1393,7 @@ Feature間の横断Compositionは`app/`で行う。
 
 Generic Table PrimitiveとFeature Tableを分離する。
 
-```text id="ncr8hu"
+```text
 components/ui/table
         ↓
 features/employees/employee-table
@@ -1385,7 +1409,7 @@ Server-side Paginationを基本とする。
 
 Generic Input等はShared UI、Employee Form等はFeature UIへ置く。
 
-```text id="2iqfuh"
+```text
 Shared Form Primitive
         ↓
 Feature Form
@@ -1409,7 +1433,7 @@ Feature固有DialogはFeature内へ置く。
 
 AccessibilityをArchitecture上の標準Requirementとする。
 
-```text id="683z5q"
+```text
 Semantic HTML
 Keyboard Navigation
 Focus
@@ -1424,7 +1448,7 @@ Error Association
 
 ## 74. Button / Link
 
-```text id="jz6c66"
+```text
 Action
 → Button
 
@@ -1448,7 +1472,7 @@ shadcn/ui等を有力候補とするが、正式採用は実装開始時の現�
 
 MVPでは巨大な独自Design Systemを構築しない。
 
-```text id="s18lnk"
+```text
 Consistent UI Primitive
 +
 Reusable Pattern
@@ -1472,7 +1496,7 @@ Tailwind CSS等を候補とする。
 
 以下を明確に区別する。
 
-```text id="uktruw"
+```text
 Loading
 Empty
 Error
@@ -1489,7 +1513,7 @@ Mutation中は局所的Pending UIを基本とする。
 
 Testを以下へ分類する。
 
-```text id="a4q69r"
+```text
 Static Analysis
 Unit Test
 Component Test
@@ -1506,7 +1530,7 @@ FastでFocusedなTestを中心にし、E2EをCritical Flowへ限定する。
 
 以下をQuality Gateとして利用する。
 
-```text id="nz0bof"
+```text
 TypeScript
 ESLint
 Import Boundary
@@ -1521,7 +1545,7 @@ Production Build
 
 Pure Logicを中心にTestする。
 
-```text id="9vwnh6"
+```text
 Formatter
 Mapper
 Schema
@@ -1538,7 +1562,7 @@ Query Parameter Conversion
 
 User-visible Behaviorを中心にTestする。
 
-```text id="ub3jbx"
+```text
 Form Interaction
 Dialog
 Table
@@ -1556,7 +1580,7 @@ Implementation Detailを中心にしない。
 
 Frontend Module間のBoundaryを確認する。
 
-```text id="wpg7ip"
+```text
 Server Query
 +
 API Client
@@ -1578,7 +1602,7 @@ API Client
 
 OpenAPIを中心にFrontend / Laravel Contractを保証する。
 
-```text id="57mc0o"
+```text
 OpenAPI
  ↓
 Laravel
@@ -1596,7 +1620,7 @@ Critical User Flowへ集中する。
 
 主な候補：
 
-```text id="ciwrto"
+```text
 Login / Logout
 Employee一覧
 Employee登録 / 編集
@@ -1612,7 +1636,7 @@ Authorization
 
 最優先Flow：
 
-```text id="5epcue"
+```text
 Login
  ↓
 Employee Search
@@ -1630,7 +1654,7 @@ EmployeeSkill登録 / 更新
 
 重要E2Eでは可能な限り、
 
-```text id="f5u26l"
+```text
 Browser
  ↓
 Next.js
@@ -1648,7 +1672,7 @@ Docker方針とTest Environmentを整合させる。
 
 ## 88. Frontend / Backend Test責務
 
-```text id="1o61zf"
+```text
 Frontend Test
 =
 UX Behavior
@@ -1668,7 +1692,7 @@ Domain Invariant
 
 基本Flow：
 
-```text id="1gziwd"
+```text
 Install
  ↓
 Generated Code Check
@@ -1696,7 +1720,7 @@ Production Build成功をFrontend Quality Gateとする。
 
 特に以下を確認する。
 
-```text id="7g8pl4"
+```text
 Server / Client Boundary
 Caching
 Rendering
@@ -1710,7 +1734,7 @@ Build-time Error
 
 以下をClient Bundleへ流さない。
 
-```text id="6hltr0"
+```text
 Sanctum Token
 Auth Secret
 Internal Credential
@@ -1725,7 +1749,7 @@ Private API Configuration
 
 Frontend Server-sideでは必要に応じて以下を記録する。
 
-```text id="02ch9m"
+```text
 Request ID
 Trace ID
 User ID
@@ -1738,7 +1762,7 @@ Duration
 
 以下を記録しない。
 
-```text id="a56vf2"
+```text
 Password
 Session Token
 Sanctum Token
@@ -1754,7 +1778,7 @@ Sensitive Form Data
 
 可能な限り、
 
-```text id="dethpn"
+```text
 Browser
  ↓
 Next.js
@@ -1772,7 +1796,7 @@ Laravel
 
 Performance問題では以下の順で検討する。
 
-```text id="h7ezwe"
+```text
 1. Query / API改善
 2. Fetch回数削減
 3. Parallel Fetch
@@ -1789,7 +1813,7 @@ Cacheを最初の対策にしない。
 
 MVPでは以下を採用しない。
 
-```text id="m3037n"
+```text
 Frontend DDD Model
 Frontend Repository Pattern
 Frontend CQRS Framework
@@ -1811,7 +1835,7 @@ Premature Redis Cache
 
 FrontendでBackend Repository Patternを再現しない。
 
-```text id="b5z4c8"
+```text
 Feature
  ↓
 Repository
@@ -1821,7 +1845,7 @@ API
 
 ではなく、
 
-```text id="trn8xr"
+```text
 Feature Server Query / Action
  ↓
 API Client
@@ -1839,7 +1863,7 @@ Command / QueryをArchitecture FrameworkとしてFrontendへ導入しない。
 
 ただしRead / Mutationの役割は明確に分ける。
 
-```text id="exwppo"
+```text
 Read
 → Server Query
 
@@ -1855,7 +1879,7 @@ Mutation
 
 BFFで許可する処理：
 
-```text id="uh6wem"
+```text
 Authentication
 API Aggregation
 Request Adaptation
@@ -1866,7 +1890,7 @@ Frontend-specific Orchestration
 
 BFFで禁止するBusiness Rule：
 
-```text id="3ee0xl"
+```text
 EmployeeSkill Invariant
 Permission管理者最低1人Rule
 Skill Deactivation Rule
@@ -1877,7 +1901,7 @@ Skill Deactivation Rule
 
 ## 99. Security全体像
 
-```text id="n6z5yk"
+```text
 Proxy
 =
 未認証Userを粗く止める
@@ -1905,7 +1929,7 @@ Business Invariantを破らせない
 
 ### Read
 
-```text id="fdqn8g"
+```text
 URL
  ↓
 Server Component
@@ -1925,7 +1949,7 @@ UI
 
 ### Mutation
 
-```text id="5xa9u6"
+```text
 Form / UI
  ↓
 Client-side UX Validation
@@ -1951,25 +1975,35 @@ Fresh UI
 
 ## 101. Authentication Flow
 
-```text id="0rjn8f"
+```text
 Browser
  ↓
-Auth.js Session
+Better Auth Session Cookie
  ↓
 Next.js Server
  ↓
+Better Auth Session確認
+ ↓
+Backend Credential取得・復号
+ ↓
 Sanctum Token
  ↓
-Laravel
+Laravel Backend API
 ```
 
-TokenをBrowserへ返さない。
+Better Auth SessionとBackend CredentialはRedisで管理する。
+
+Backend CredentialはApplication Level Encryptionして保存する。
+
+Sanctum TokenをBrowserへ返さない。
+
+Application User Authenticationと最終的なAuthorizationはLaravelが担当する。
 
 ---
 
 ## 102. Authorization Flow
 
-```text id="5p1o7m"
+```text
 Route Access
  ↓
 Authentication Check
@@ -1987,7 +2021,7 @@ Domain / Application Processing
 
 ## 103. Error Flow
 
-```text id="yrgf51"
+```text
 Laravel
  ↓
 API Error Contract
@@ -2011,7 +2045,7 @@ Expected Error?
 
 ## 104. Cache Flow
 
-```text id="4rm39s"
+```text
 Read
  ↓
 Cache必要性あり？
@@ -2029,7 +2063,7 @@ Cache必要性あり？
 
 Mutation時：
 
-```text id="0xzlxy"
+```text
 Laravel Success
  ↓
 Affected Cached Data?
@@ -2047,7 +2081,7 @@ Affected Cached Data?
 
 ## 105. State Flow
 
-```text id="8iairv"
+```text
 Stateが必要
  ↓
 Backend Data？
@@ -2073,7 +2107,7 @@ Application-wide Complex Client State？
 
 ## 106. UI Placement判断
 
-```text id="48hpu6"
+```text
 UI
  ↓
 Feature固有？
@@ -2107,7 +2141,7 @@ Generic Reusable UI？
 
 ## 107. Final Directory Image
 
-```text id="27ddls"
+```text
 src/
 ├── app/
 │   ├── (auth)/
@@ -2211,15 +2245,24 @@ Frontend Architectureとして以下を正式採用する。
 
 ### Authentication / Authorization
 
-- Browser ↔ Next.jsはAuth.js Sessionを利用する
+- Browser ↔ Next.jsはBetter Auth Sessionを利用する
 - Next.js ↔ LaravelはSanctum Tokenを利用する
+- Application User AuthenticationはLaravelが担当する
+- Browser Session ManagementはBetter Authが担当する
+- Better Auth Sessionの保存先はRedisとする
+- Backend CredentialはBetter Auth Sessionと分離してRedisへ暗号化保存する
+- RedisはMVPで1 Instanceとし、NamespaceとACLでAccess権限を分離する
 - Sanctum TokenをServer-onlyとする
-- Auth.js SessionをFrontend Authentication Source of Truthとする
+- Sanctum TokenをBrowserへ公開しない
+- Browser Session StateのSource of TruthはBetter Authとする
+- Application User AuthenticationのSource of TruthはLaravelとする
+- Next.jsからPostgreSQLへ直接接続しない
 - Frontend独自Auth Storeを作らない
 - Frontend AuthorizationをUX / Early Rejectionとする
 - Laravel AuthorizationをSecurity Authorityとする
 - Permission管理最低1人等のInvariantをLaravelで保証する
 - Session CapabilityをSecurity Authorityとしない
+- Laravel Authentication結果からBetter Auth Sessionを成立させる具体方式は公式APIの検証後に確定する
 
 ### State
 
@@ -2228,7 +2271,8 @@ Frontend Architectureとして以下を正式採用する。
 - Search / Filter / Sort / PaginationをURL Stateとする
 - Form StateをForm Scopeへ閉じ込める
 - UI Stateを最も近いClient Componentが所有する
-- Auth.js Sessionを独自Stateへ複製しない
+- Better Auth Sessionを独自Stateへ複製しない
+- Backend CredentialをClient Stateへ保存しない
 - Redux / ZustandをMVPでは採用しない
 - TanStack Query / SWRをMVPでは採用しない
 - Requirement発生時に段階的に再検討する
@@ -2311,7 +2355,7 @@ Frontend Architectureとして以下を正式採用する。
 
 本Frontend Architectureでは、以下を最重要原則とする。
 
-```text id="vp09io"
+```text
 Render on Server by Default
 
 Interact on Client only when necessary
@@ -2343,7 +2387,7 @@ Test Behavior, not Implementation
 
 本ProjectのFrontend Architectureを以下で確定する。
 
-```text id="ztaija"
+```text
 Next.js App Router
         +
 Server Component First
@@ -2352,7 +2396,9 @@ Feature-based Architecture
         +
 Next.js BFF
         +
-Auth.js
+Better Auth
+        +
+Redis Session / Backend Credential Store
         +
 Laravel Sanctum
         +
@@ -2371,7 +2417,7 @@ FrontendはUI / UX / BFF / Presentationへ集中し、Business Correctness・Aut
 
 これにより、
 
-```text id="h8a5tz"
+```text
 Frontend
 =
 変更しやすいPresentation Layer

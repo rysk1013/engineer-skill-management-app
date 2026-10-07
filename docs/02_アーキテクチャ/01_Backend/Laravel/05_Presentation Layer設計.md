@@ -833,16 +833,17 @@ Validation Errorなど複数項目の詳細が必要な場合については、O
 
 ## 25. Authenticationとの境界
 
-BrowserからのAuthenticationはNext.js / Auth.js側で管理する。
+Browser SessionはNext.js / Better Auth側で管理する。
 
+Application User AuthenticationはLaravel Backendが担当し、
 Backend APIではBFFから渡されたLaravel Sanctum Tokenを検証する。
 
 概念的な流れは以下とする。
 
-```text id="fvvgys"
+```text
 Browser
     ↓
-Next.js / Auth.js Session
+Next.js / Better Auth Session
     ↓
 BFF
     ↓
@@ -857,7 +858,8 @@ Application
 
 Application / Domain LayerへSanctum Tokenそのものを渡さない。
 
-認証済みActorの情報がUseCaseで必要な場合は、ActorContextなどのApplication Portへ変換する。
+認証済みActorの情報がUseCaseで必要な場合は、
+ActorContextなどのApplication Portへ変換する。
 
 ---
 

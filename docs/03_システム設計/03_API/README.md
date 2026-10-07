@@ -113,7 +113,8 @@ OpenAPI変更と実装変更は同じPull Request、または依存関係が明�
 
 - OpenAPIから生成したTypeScript型を使用する
 - Browser向けInputをBackend API Requestへ変換する
-- Auth.js Sessionを確認する
+- Better Auth Sessionを確認する
+- Sessionに対応するBackend Credentialを取得する
 - Laravel用Sanctum Tokenを付与する
 - Backend API ResponseをBrowser向けResponseまたは画面Modelへ変換する
 - API ClientはOpenAPI型を利用した薄いAdapterとして実装する

@@ -6,11 +6,8 @@
 
 目的は以下とする。
 
-- Browser ↔ Next.jsのSession ManagementをBetter Authへ統一する
-- Application User AuthenticationをLaravelへ統一する
-- Next.js ↔ LaravelのAuthenticationをLaravel Sanctumへ統一する
-- Better Auth Session StoreとしてRedisを利用する
-- Next.jsからPostgreSQLへ直接接続しない
+- Browser ↔ Next.jsの認証をAuth.jsへ統一する
+- Next.js ↔ Laravelの認証をLaravel Sanctumへ統一する
 - Sanctum TokenをBrowserへ公開しない
 - Frontend AuthorizationとBackend Authorizationの責務を分離する
 - UI制御とSecurity Authorityを混同しない
@@ -18,18 +15,14 @@
 - Resource単位の最終AuthorizationをLaravelへ集約する
 - Server Action / Route HandlerをTrust Boundaryとして扱う
 - Authentication / Authorizationの多層防御を実現する
-- Session / Permission / Credentialの責務を分離する
+- Session / Permission / Credentialの二重管理を防ぐ
 
 基本方針を以下とする。
 
-```text
-Application User Authentication
+```text id="1pcr9t"
+Authentication
 =
-Laravel
-
-Browser Session Management
-=
-Better Auth / Next.js
+Auth.js / Next.js
 
 Frontend Authorization
 =
@@ -40,40 +33,23 @@ Business Authorization
 Laravelで最終保証
 ```
 
-全体のAuthentication Boundaryは以下とする。
+全体の認証境界は以下とする。
 
-```text
+```text id="4ir1j1"
 Browser
    │
-   │ Better Auth Session Cookie
+   │ Auth.js Session
    ▼
 Next.js
    │
-   │ Laravel Sanctum Token
+   │ Sanctum Token
    ▼
 Laravel
-   │
-   ▼
-PostgreSQL
-```
-
-Session / Credential Store：
-
-```text
-Next.js
-   │
-   ├── Better Auth Session
-   │       ↓
-   │     Redis
-   │
-   └── Backend Credential
-           ↓
-         Redis
 ```
 
 Authorizationの責務は以下とする。
 
-```text
+```text id="slw9jq"
 Next.js Authorization
 =
 UX / Early Rejection
@@ -89,7 +65,7 @@ Security Authority
 
 AuthenticationとAuthorizationは別責務として扱う。
 
-```text
+```text id="umozzn"
 Authentication
 =
 誰であるか
@@ -103,257 +79,68 @@ Frontend Architecture上でもこの区別を維持する。
 
 ---
 
-## 3. Authenticationの責務分離
+## 3. AuthenticationのSource of Truth
 
-本ApplicationではAuthenticationを3つの責務へ分離する。
+Browser ↔ Next.jsのAuthenticationはAuth.jsをSource of Truthとする。
 
-```text
-Application Credential Authentication
-=
-Laravel
-
-Browser Session Management
-=
-Better Auth
-
-Backend API Authentication
-=
-Laravel Sanctum
-```
-
-それぞれを混在させない。
-
-Better AuthがApplication UserのPassword検証を行わない。
-
-Laravel SanctumをBrowser Session Managementへ利用しない。
-
----
-
-## 4. Application User Authentication
-
-Application User Authenticationの主体はLaravelとする。
-
-Login Credential：
-
-```text
-login_id
-password
-```
-
-基本Flow：
-
-```text
+```text id="vv2prd"
 Browser
    ↓
-login_id + password
-   ↓
-Next.js BFF
-   ↓
-Laravel Login API
-   ↓
-users.login_idでUser特定
-   ↓
-users.passwordをHash検証
-   ↓
-users.is_active確認
-   ↓
-Authentication成功
-```
-
-Password HashはLaravel側で管理する。
-
-Better AuthへPassword Credentialを保存しない。
-
----
-
-## 5. Browser SessionのSource of Truth
-
-Browser ↔ Next.jsのAuthentication StateはBetter Auth SessionをSource of Truthとする。
-
-```text
-Browser
-   ↓
-Better Auth Session Cookie
+Auth.js Session
    ↓
 Next.js Server
-   ↓
-Redis Session Store
 ```
 
 独自のAuthentication Stateを別途Global Storeへ複製しない。
 
 避ける例：
 
-```text
+```text id="7hljqf"
 isLoggedIn
 currentUser
 authStore
 ```
 
-Better Auth Sessionとは別のAuthentication Source of Truthを作らない。
+Auth.js Sessionと別のAuthentication Source of Truthを作らない。
 
 ---
 
-## 6. Better Auth Session Store
+## 4. Auth.js Session Store
 
-Better Auth Session StoreにはRedisを利用する。
+Auth.js Session StoreにはPostgreSQLを利用する。
 
-```text
+```text id="q96c1w"
 Browser
    │
    │ Session Cookie
    ▼
-Better Auth
+Auth.js
    │
    ▼
-Redis
+PostgreSQL Session Store
 ```
 
-BrowserはRedisへ直接アクセスしない。
+BrowserはSession DB Recordそのものを管理しない。
 
-Browser側はBetter Auth Session Cookieのみを利用する。
-
-Next.jsからPostgreSQLへSessionを保存しない。
+Browser側はAuth.js Session Cookieを利用する。
 
 ---
 
-## 7. Redisの役割
-
-RedisはAuthenticationに必要な短命なServer Side Stateを管理する。
-
-MVPではRedisを1 Instance利用する。
-
-```text
-Redis
-├── Better Auth Session
-└── Backend API Credential
-```
-
-RedisをApplication DataのPrimary Storeとして利用しない。
-
-Application DataはPostgreSQLで管理する。
-
----
-
-## 8. Redis Namespace
-
-Better Auth SessionとBackend CredentialはKey Namespaceを分離する。
-
-概念：
-
-```text
-better-auth:*
-```
-
-Better Auth管理領域。
-
-```text
-backend-credential:*
-```
-
-BFF Credential管理領域。
-
-Better Authが管理するSession DataへSanctum Tokenを直接格納しない。
-
-具体的なKey SchemaはAuthentication詳細設計で決定する。
-
----
-
-## 9. Redis ACL
-
-Better Auth SessionとBackend CredentialではRedis Access権限を分離する。
-
-概念：
-
-```text
-Better Auth Redis User
-   ↓
-better-auth:*
-
-
-BFF Credential Redis User
-   ↓
-backend-credential:*
-```
-
-Least Privilegeを基本とする。
-
-Better Auth用Redis CredentialからBackend Credential Namespaceを参照できない構成を基本とする。
-
-BFF Credential用Redis Credentialからも不要なBetter Auth Keyへアクセスさせない。
-
-具体的なACL RuleはInfrastructure詳細設計で決定する。
-
----
-
-## 10. PostgreSQL Access Boundary
-
-PostgreSQLへの直接接続はLaravel Backendのみとする。
-
-採用する構成：
-
-```text
-Next.js
-   ↓ HTTP
-Laravel API
-   ↓
-PostgreSQL
-```
-
-採用しない構成：
-
-```text
-Next.js
-   ↓
-PostgreSQL
-```
-
-Authentication処理を理由としてNext.jsからPostgreSQLへ直接接続しない。
-
----
-
-## 11. Application Data Access
-
-Application Dataの取得・更新はLaravel APIを経由する。
-
-```text
-Next.js
-   ↓
-Laravel API
-   ↓
-PostgreSQL
-```
-
-対象：
-
-- users
-- employees
-- departments
-- skill_categories
-- skills
-- employee_skills
-- Access Control Data
-- その他Application Data
-
-Next.jsからApplication Tableを直接操作しない。
-
----
-
-## 12. Laravel Authentication
+## 5. Laravel Authentication
 
 Next.js → Laravel APIのAuthenticationにはLaravel Sanctum Tokenを使用する。
 
-```text
+```text id="hv1u49"
 Next.js Server
    │
-   │ Authorization: Bearer <Sanctum Token>
+   │ Bearer Token
    ▼
 Laravel Sanctum
 ```
 
 Sanctum TokenはBrowserへ公開しない。
 
-```text
+```text id="lhd1iu"
 Browser
   ×
 Sanctum Token
@@ -361,67 +148,51 @@ Sanctum Token
 
 ---
 
-## 13. Authentication Boundary
+## 6. 二つのAuthentication Boundary
 
-本Applicationには以下のAuthentication Boundaryが存在する。
+本Applicationには以下の2つのAuthentication Boundaryが存在する。
 
-```text
+```text id="81weze"
 ① Browser
       ↓
-   Better Auth Session
+   Auth.js
       ↓
    Next.js
 
-
 ② Next.js
       ↓
-   Sanctum Token
+   Sanctum
       ↓
    Laravel
-
-
-③ Laravel
-      ↓
-   login_id / password
-      ↓
-   Application User
 ```
 
-それぞれの責務を混在させない。
+この2つを混在させない。
 
 BrowserからLaravel Sanctumへ直接Authenticationさせる構成は採用しない。
 
 ---
 
-## 14. Server-side Session取得
+## 7. Server-side Session取得
 
-Server Component / Server Action / Route Handler等のServer側処理では、Better AuthのServer Side APIを通じてCurrent Sessionを取得する。
+Server Component / Server Action / Route Handler等のServer側処理では、Auth.jsのServer APIからCurrent Sessionを取得する。
 
-概念：
+概念例：
 
-```text
-Server Component
-Server Action
-Route Handler
-      ↓
-Better Auth
-      ↓
-Current Session
+```ts id="hp733h"
+const session = await auth();
 ```
-
-具体的なBetter Auth APIの呼び出し方法はAuthentication詳細設計で確定する。
 
 Server側でAuthentication判断できる場合は、Client ComponentへSession判定を移さない。
 
 ---
 
-## 15. Client-side Session取得
+## 8. Client-side Session取得
 
-Client ComponentでAuthentication情報が本当に必要な場合のみBetter AuthのClient Side機能を利用する。
+Client ComponentでAuthentication情報が本当に必要な場合のみ、Auth.jsのClient APIを利用する。
 
-```text
+```text id="hl4juq"
 Client Component
-      ↓
+↓
 Session参照
 ```
 
@@ -431,33 +202,31 @@ Server Component Firstの方針に従い、Serverで判断可能なAuthenticatio
 
 ---
 
-## 16. Client Authentication Context
+## 9. SessionProvider
 
-Client側にAuthentication Contextが必要な場合のみ、Better AuthのClient Side Integrationを利用する。
+Client側でAuth.js Session Contextが必要な場合のみ`SessionProvider`を利用する。
 
-以下のようにApplication全体へ無条件にClient Authentication Providerを配置しない。
+以下のようにApplication全体へ無条件にProviderを配置しない。
 
-```text
+```text id="vke3jd"
 Root Layout
-   ↓
-Client Authentication Provider
-   ↓
+ ↓
+SessionProvider
+ ↓
 Application全体
 ```
 
 Client Sessionが必要な範囲へ限定する。
 
-具体的なIntegration方式はBetter Authの採用APIに合わせて決定する。
-
 ---
 
-## 17. Protected Route
+## 10. Protected Route
 
 Authentication必須Routeへの未Authentication UserのアクセスをNext.js側で防止する。
 
 基本Flow：
 
-```text
+```text id="fj4mkr"
 Request
    ↓
 Next.js Route Boundary
@@ -471,17 +240,16 @@ Next.jsの現在の構成に合わせ、粗いRoute ProtectionにはProxyを利�
 
 ---
 
-## 18. Proxyの責務
+## 11. Proxyの責務
 
 Proxyでは主に粗いAuthentication Boundaryを扱う。
 
 例：
 
-```text
+```text id="bi9kf4"
 /login
 =
 Public
-
 
 /employees/*
 /skills/*
@@ -495,20 +263,20 @@ ProxyへResource単位の複雑なBusiness Authorizationを配置しない。
 
 ---
 
-## 19. Proxyで扱わないAuthorization
+## 12. Proxyで扱わないAuthorization
 
 例えば以下のような判定をProxyだけで完結させない。
 
-```text
+```text id="t1n7ot"
 Sub Manager Aは
 Employee 123を編集可能か？
 ```
 
-このようなResource Relationshipを伴うAuthorizationの最終判断はLaravelで行う。
+このようなResource Relationを伴うAuthorizationの最終判断はLaravelで行う。
 
 Proxyでは、
 
-```text
+```text id="33cgb8"
 Authenticatedか
 Route大分類へ入れるか
 ```
@@ -517,11 +285,11 @@ Route大分類へ入れるか
 
 ---
 
-## 20. Route Group
+## 13. Route Group
 
 既存Directory設計のRoute Groupを利用する。
 
-```text
+```text id="76havz"
 app/
 ├── (auth)/
 └── (dashboard)/
@@ -529,7 +297,7 @@ app/
 
 概念的には以下とする。
 
-```text
+```text id="9ynxra"
 (auth)
 =
 Public / Authentication関連
@@ -539,20 +307,20 @@ Public / Authentication関連
 Authentication必須領域
 ```
 
-Route GroupそのものにはSecurity機能がない。
+ただしRoute GroupそのものにはSecurity機能がない。
 
-実際のProtectionはBetter Auth / Proxy / Server-side Checkで行う。
+実際のProtectionはAuth.js / Proxy / Server-side Checkで行う。
 
 ---
 
-## 21. Server ComponentでのAuthentication Check
+## 14. Server ComponentでのAuthentication Check
 
 重要なServer Componentでは必要に応じてSessionを確認する。
 
-```text
+```text id="8ey2vm"
 Server Component
       ↓
-Better Auth
+auth()
       ↓
 Session確認
 ```
@@ -561,11 +329,11 @@ Proxyを通過したことだけを理由に、Server側Authentication Context�
 
 ---
 
-## 22. Defense in Depth
+## 15. Defense in Depth
 
 Authentication / Authorizationは単一箇所へ依存させない。
 
-```text
+```text id="dbbi4o"
 Proxy
    ↓
 Next.js Server Boundary
@@ -577,11 +345,11 @@ Laravel
 
 ---
 
-## 23. Authorization基本方針
+## 16. Authorization基本方針
 
 Authorizationは以下の二段階に分ける。
 
-```text
+```text id="r2pcro"
 Next.js
 =
 Frontend Authorization
@@ -597,11 +365,11 @@ LaravelはSecurity Authorityを担当する。
 
 ---
 
-## 24. Frontend Authorization
+## 17. Frontend Authorization
 
 Next.js側では以下のUI制御を行うことができる。
 
-```text
+```text id="kwg4cl"
 Menu非表示
 Button非表示
 Edit UI無効化
@@ -611,7 +379,7 @@ Forbidden UI表示
 
 例：
 
-```text
+```text id="8latxs"
 Team Leader
 ↓
 Employee Detail閲覧可能
@@ -625,11 +393,11 @@ Edit Button
 
 ---
 
-## 25. UI制御をSecurity Authorityとしない
+## 18. UI制御をSecurity Authorityとしない
 
 ButtonやMenuを非表示にしてもSecurity保証にはならない。
 
-```text
+```text id="1ydhff"
 UI非表示
 ≠
 Security
@@ -639,11 +407,11 @@ Frontendを迂回したRequestが送信される可能性があるため、Larav
 
 ---
 
-## 26. LaravelをAuthorizationの最終Authorityとする
+## 19. LaravelをAuthorizationの最終Authorityとする
 
 最終的なアクセス可否はLaravelで決定する。
 
-```text
+```text id="hchpdb"
 Next.js
  ↓
 Request
@@ -661,11 +429,11 @@ Resource単位のAuthorizationはLaravel Policy等で実装する。
 
 ---
 
-## 27. Frontend / Backend二重防御
+## 20. Frontend / Backend二重防御
 
 基本原則を以下とする。
 
-```text
+```text id="lwcjir"
 Frontend
 =
 できない操作を見せない
@@ -677,7 +445,7 @@ Backend
 
 したがって、
 
-```text
+```text id="278gu0"
 Frontend Authorization
 +
 Backend Authorization
@@ -687,11 +455,11 @@ Backend Authorization
 
 ---
 
-## 28. Role
+## 21. Role
 
 本ApplicationのRoleは以下とする。
 
-```text
+```text id="uwgh9x"
 Administrator
 Manager
 Sub Manager
@@ -703,7 +471,7 @@ General EmployeeはApplicationを利用しないため、通常のAuthenticated 
 
 ---
 
-## 29. RoleだけでAuthorizationしない
+## 22. RoleだけでAuthorizationしない
 
 AuthorizationはRoleだけでは決定しない。
 
@@ -711,7 +479,7 @@ AuthorizationはRoleだけでは決定しない。
 
 基本的な判断要素を以下とする。
 
-```text
+```text id="zyfge3"
 Role
 +
 Resource Relationship
@@ -721,11 +489,11 @@ Permission
 
 ---
 
-## 30. RoleとResource Scope
+## 23. RoleとResource Scope
 
 基本Scopeを以下とする。
 
-```text
+```text id="8y54ip"
 Administrator
 → 全体管理
 
@@ -744,11 +512,11 @@ General Employee
 
 ---
 
-## 31. Permission管理権限
+## 24. Permission管理権限
 
 Administratorには追加属性として、
 
-```text
+```text id="mbm72l"
 can_manage_permissions
 ```
 
@@ -756,13 +524,13 @@ can_manage_permissions
 
 Permission管理可否を以下だけで判断しない。
 
-```text
+```text id="f2ogof"
 role === ADMINISTRATOR
 ```
 
 Permission管理には、
 
-```text
+```text id="jgvloz"
 ADMINISTRATOR
 +
 can_manage_permissions = true
@@ -772,11 +540,11 @@ can_manage_permissions = true
 
 ---
 
-## 32. Permission管理者最低1人Invariant
+## 25. Permission管理者最低1人Invariant
 
 以下のInvariantを維持する。
 
-```text
+```text id="5gt7ud"
 can_manage_permissions = true
 のAdministratorを
 最低1人維持する
@@ -788,7 +556,7 @@ Frontendだけでは保証しない。
 
 ---
 
-## 33. Frontend Authorization情報
+## 26. Frontend Authorization情報
 
 FrontendへはUI制御に必要な最小限のAuthorization情報のみ渡す。
 
@@ -796,7 +564,7 @@ FrontendへはUI制御に必要な最小限のAuthorization情報のみ渡す。
 
 概念例：
 
-```ts
+```ts id="pwnuxm"
 type FrontendPermissions = {
   canViewEmployees: boolean;
   canEditEmployees: boolean;
@@ -809,11 +577,11 @@ type FrontendPermissions = {
 
 ---
 
-## 34. Role CheckをUIへ散在させない
+## 27. Role CheckをUIへ散在させない
 
 以下のようなRole Checkを多数のComponentへ散在させない。
 
-```ts
+```ts id="bo0jje"
 if (user.role === "ADMINISTRATOR") {
   // ...
 }
@@ -821,7 +589,7 @@ if (user.role === "ADMINISTRATOR") {
 
 または、
 
-```ts
+```ts id="0rs0cq"
 if (
   user.role === "MANAGER" ||
   user.role === "ADMINISTRATOR"
@@ -834,11 +602,11 @@ Authorization Ruleの重複と変更影響拡大につながるため避ける�
 
 ---
 
-## 35. Capabilityを優先する
+## 28. Capabilityを優先する
 
 UI側では可能な範囲でCapabilityを利用する。
 
-```text
+```text id="35w052"
 Role / Session Context
        ↓
 Frontend Authorization
@@ -850,7 +618,7 @@ UI
 
 例：
 
-```ts
+```ts id="gxh57f"
 if (permissions.canEditEmployees) {
   // Edit UI
 }
@@ -860,13 +628,13 @@ Role Structure変更の影響をUIへ広げにくくする。
 
 ---
 
-## 36. CapabilityをSecurity Authorityとしない
+## 29. CapabilityをSecurity Authorityとしない
 
 Frontendへ渡されたCapabilityはUI制御にのみ利用する。
 
 例えば、
 
-```text
+```text id="t4oe09"
 canEditEmployees = true
 ```
 
@@ -876,13 +644,13 @@ Browser側Dataは改変可能であるため、LaravelはRequestごとにAuthori
 
 ---
 
-## 37. Resource単位Authorization
+## 30. Resource単位Authorization
 
 Resource単位のAuthorizationはUserとResourceの関係をもとに判断する。
 
 例：
 
-```text
+```text id="ibnmiw"
 Sub Manager A
       ↓
 Employee 10
@@ -898,11 +666,11 @@ Employee 20
 
 ---
 
-## 38. Server ReadとAuthorization
+## 31. Server ReadとAuthorization
 
 Server Component / Server QueryがResource APIへアクセスし、Laravelから403が返された場合、Next.js側でForbidden UIへMappingする。
 
-```text
+```text id="h4aq93"
 Server Component
       ↓
 getEmployee(123)
@@ -918,13 +686,13 @@ Laravel Authorization RuleをFrontendへ完全再実装しない。
 
 ---
 
-## 39. Early Authorization
+## 32. Early Authorization
 
 Current SessionのRole / Capabilityから明らかに禁止される操作についてはNext.js側でEarly Rejectionを行ってよい。
 
 例：
 
-```text
+```text id="v2l0oe"
 Team Leader
 +
 Employee Create Page
@@ -932,7 +700,7 @@ Employee Create Page
 
 の場合、
 
-```text
+```text id="imw2pl"
 Navigation非表示
 Forbidden UI
 Redirect
@@ -942,7 +710,7 @@ Redirect
 
 目的はSecurityの代替ではなく、
 
-```text
+```text id="tax394"
 UX改善
 +
 不要Request削減
@@ -952,13 +720,13 @@ UX改善
 
 ---
 
-## 40. Server ActionはTrust Boundary
+## 33. Server ActionはTrust Boundary
 
 Server ActionはClientから呼び出され得るServer Boundaryとして扱う。
 
 基本Flow：
 
-```text
+```text id="3v7m7a"
 Server Action
       ↓
 Authentication
@@ -976,11 +744,11 @@ Client側Button非表示等を信用しない。
 
 ---
 
-## 41. Server ActionでもLaravel Authorizationを必須とする
+## 34. Server ActionでもLaravel Authorizationを必須とする
 
 Next.js Server Action側でAuthorizationを確認していても、Laravel Authorizationを省略しない。
 
-```text
+```text id="1xoc9p"
 Next.js Authorization
 +
 Laravel Authorization
@@ -990,13 +758,13 @@ Laravelを最終Authorityとする。
 
 ---
 
-## 42. Route HandlerはTrust Boundary
+## 35. Route HandlerはTrust Boundary
 
 Route HandlerはBrowserから直接到達可能なHTTP Endpointである。
 
 したがって、
 
-```text
+```text id="0ix4ld"
 Browser
  ↓
 Route Handler
@@ -1014,11 +782,11 @@ Laravel Authorization
 
 ---
 
-## 43. Route Handlerを無認証Proxyにしない
+## 36. Route Handlerを無認証Proxyにしない
 
 以下の構成は禁止する。
 
-```text
+```text id="5bw4sr"
 Browser
  ↓
 Route Handler
@@ -1034,84 +802,30 @@ Route HandlerではCurrent User Contextを必ず確認する。
 
 ---
 
-## 44. Backend Credential
+## 37. Sanctum Token
 
-Laravel Sanctum TokenはServer-onlyとする。
+Sanctum TokenはServer-onlyとする。
 
-利用可能な範囲：
+利用可能な範囲は以下とする。
 
-```text
-Next.js Server-side Authentication処理
+```text id="vuasst"
+Auth.js Server-side処理
+Server-side Session関連処理
 Server-only API Client
 Server Action
 Route Handler
 Server Query
-BFF Credential管理処理
 ```
 
 Browserへ返却するDataには含めない。
 
 ---
 
-## 45. Backend Credential Store
-
-Sanctum TokenはRedisへ保存する。
-
-Better Auth Sessionとは別Namespaceで管理する。
-
-```text
-Redis
-
-better-auth:*
-└── Session
-
-backend-credential:*
-└── Encrypted Sanctum Token
-```
-
-Better Auth Session DataへSanctum Tokenを直接含めない。
-
----
-
-## 46. Sanctum Token暗号化
-
-Sanctum TokenはRedisへ平文保存しない。
-
-保存時：
-
-```text
-Sanctum Token
-   ↓
-Encrypt
-   ↓
-backend-credential:*
-```
-
-利用時：
-
-```text
-backend-credential:*
-   ↓
-Decrypt
-   ↓
-Authorization Header
-   ↓
-Laravel API
-```
-
-暗号化・復号はNext.js Server Sideで行う。
-
-Encryption KeyをRedisへ保存しない。
-
-Encryption KeyをSource Codeへ保存しない。
-
----
-
-## 47. Sanctum TokenをPropsへ渡さない
+## 38. Sanctum TokenをPropsへ渡さない
 
 以下は禁止する。
 
-```tsx
+```tsx id="t1wlpb"
 <EmployeeList
   sanctumToken={token}
 />
@@ -1121,30 +835,28 @@ Server ComponentからClient ComponentへもTokenを渡さない。
 
 ---
 
-## 48. Sanctum TokenをBrowser Storageへ保存しない
+## 39. Sanctum TokenをBrowser Storageへ保存しない
 
 以下への保存は禁止する。
 
-```text
+```text id="oyzj7f"
 localStorage
 sessionStorage
 IndexedDB
 Client-side Global Store
-Browser JavaScriptから参照可能なCookie
-Better Auth Session Cookie
 ```
 
-BrowserはBetter Auth Session Cookieのみを利用する。
+BrowserはAuth.js Sessionのみを利用する。
 
 ---
 
-## 49. Session Responseを最小化する
+## 40. Session Responseを最小化する
 
 Clientへ公開するSession情報は必要最小限とする。
 
 候補：
 
-```text
+```text id="7yl2v8"
 User ID
 Display Name
 Role
@@ -1154,30 +866,28 @@ Session Expiration
 
 以下は公開しない。
 
-```text
+```text id="9r9gq7"
 Sanctum Token
 Internal Credential
 Server Secret
 Password Hash
 Authentication Secret
-Redis Credential
 ```
 
 ---
 
-## 50. SessionへUser Entity全体を格納しない
+## 41. SessionへUser Entity全体を格納しない
 
 FrontendでUser識別が必要な場合は必要なIdentifierをSessionへ含めてよい。
 
 ただし、
 
-```text
+```text id="rqel3n"
 Session
 =
 Frontend Authentication Context
 
 ≠
-
 User Database Dump
 ```
 
@@ -1187,11 +897,11 @@ User Entity全体や大量の関連DataをSessionへ詰め込まない。
 
 ---
 
-## 51. Sessionへ大量のAuthorization Dataを保持しない
+## 42. Sessionへ大量のAuthorization Dataを保持しない
 
 以下のようなDataをSessionへ大量に格納しない。
 
-```text
+```text id="4l5i7q"
 全担当Employee ID
 Resourceごとの全Permission
 全Skill Data
@@ -1202,13 +912,13 @@ Resource単位AuthorizationはLaravelへ問い合わせる。
 
 ---
 
-## 52. Permission Freshness
+## 43. Permission Freshness
 
 Role / Permission変更後、ClientまたはSession上のCapabilityが一時的に古くなる可能性を考慮する。
 
 したがって、
 
-```text
+```text id="d1n6sz"
 Session Capability
 =
 UI Hint
@@ -1224,11 +934,11 @@ Session情報のFreshnessだけにSecurityを依存しない。
 
 ---
 
-## 53. Authentication Failure
+## 44. Authentication Failure
 
 未Authentication UserがProtected Routeへアクセスした場合はLoginへ誘導する。
 
-```text
+```text id="2uo7dd"
 Protected Route
       ↓
 Authenticationなし
@@ -1240,11 +950,11 @@ Session失効時も同様に再Authenticationへ誘導する。
 
 ---
 
-## 54. Authorization Failure
+## 45. Authorization Failure
 
 Authentication済みだがPermissionがない場合はForbiddenとして扱う。
 
-```text
+```text id="wljuv8"
 Authenticated
 +
 Permissionなし
@@ -1254,7 +964,7 @@ Permissionなし
 
 以下を区別する。
 
-```text
+```text id="7o1s6m"
 Unauthenticated
 → Login
 
@@ -1264,11 +974,11 @@ Unauthorized / Forbidden
 
 ---
 
-## 55. 401と403
+## 46. 401と403
 
 HTTP Statusの意味を維持する。
 
-```text
+```text id="eehaqm"
 401
 =
 Authenticationが必要
@@ -1283,7 +993,7 @@ Frontend Error Handlingでもこの違いを保持する。
 
 ---
 
-## 56. 404との関係
+## 47. 404との関係
 
 Resource存在有無を権限のないUserへ公開したくない場合など、Laravel側Security Policyとして403ではなく404を返す設計を許可する。
 
@@ -1293,11 +1003,11 @@ Frontendが独自に403を404へ変換しない。
 
 ---
 
-## 57. Login Page
+## 48. Login Page
 
 Login PageはPublic Routeとする。
 
-```text
+```text id="z7a5ho"
 app/
 └── (auth)/
     └── login/
@@ -1307,139 +1017,36 @@ Authenticated UserがLogin Pageへアクセスした場合は、Dashboard等のA
 
 ---
 
-## 58. Login Flow
+## 49. Logout
 
-基本Login Flow：
+LogoutではAuth.js Sessionを終了する。
 
-```text
-1. Browser
-   ↓
-   login_id + password
-
-2. Next.js BFF
-   ↓
-   Laravel Login API
-
-3. Laravel
-   ↓
-   User検索
-   Password Hash検証
-   User有効状態確認
-
-4. Laravel
-   ↓
-   Authentication成功
-   Sanctum Token発行
-
-5. Laravel
-   ↓
-   Authenticated User情報
-   +
-   Sanctum Token
-
-6. Next.js
-   ↓
-   Better Auth Session作成
-
-7. Better Auth
-   ↓
-   SessionをRedisへ保存
-
-8. Next.js BFF
-   ↓
-   Sanctum Token暗号化
-
-9. Backend Credential Store
-   ↓
-   Redisへ保存
-
-10. Browser
-    ↓
-    Better Auth Session Cookie
-
-11. Login完了
-```
-
-Better AuthがLaravel認証結果を利用してSessionを成立させる具体方式はAuthentication詳細設計で確定する。
-
----
-
-## 59. Backend API Request Flow
-
-Login後：
-
-```text
-Browser
-   |
-   | Better Auth Session Cookie
-   v
-Next.js / Better Auth
-   |
-   | Session Lookup
-   v
-Redis
-   |
-   | Session Valid
-   v
-Next.js BFF
-   |
-   | Backend Credential Lookup
-   v
-Redis
-   |
-   | Encrypted Sanctum Token
-   v
-Next.js BFF
-   |
-   | Decrypt
-   |
-   | Authorization: Bearer <token>
-   v
-Laravel API
-   |
-   | Sanctum Authentication
-   v
-Application Processing
-```
-
-BrowserからLaravel Backend APIを直接呼び出さない。
-
----
-
-## 60. Logout
-
-LogoutではBetter Auth SessionとLaravel Sanctum Token双方を失効対象とする。
+必要に応じてLaravel Sanctum Tokenも失効させる。
 
 概念Flow：
 
-```text
+```text id="mxpz6a"
 Logout
-   ↓
-Backend Credential特定
-   ↓
-Sanctum Token失効
-   ↓
-Backend Credential削除
-   ↓
-Better Auth Session失効
-   ↓
-Session Cookie無効化
-   ↓
+ ↓
+Auth.js Session終了
+ ↓
+Laravel Sanctum Token失効
+ ↓
 Loginへ遷移
 ```
 
-具体的な実行順序、Error Handling、RetryはAuthentication詳細設計で決定する。
+具体的なToken LifecycleとLogout手順はAuthentication実装設計で確定する。
 
 ---
 
-## 61. Session ExpirationとToken Expiration
+## 50. Session ExpirationとToken Expiration
 
-Better Auth SessionとLaravel Sanctum TokenのExpiration / Revocationは独立して発生し得る。
+Auth.js SessionとLaravel Sanctum TokenのExpiration / Revocationは独立して発生し得る。
 
 例：
 
-```text
-Better Auth Session
+```text id="hifqyv"
+Auth.js Session
       ↓
 有効
 
@@ -1452,15 +1059,15 @@ Laravel API
 401
 ```
 
-この場合、Laravel 401をAuthentication Credential失効として適切に処理する。
+この場合、Laravel 401をAuthentication失効として適切に処理する。
 
 ---
 
-## 62. Backend Credential Lifecycle
+## 51. Sanctum Token Lifecycle
 
-以下をAuthentication詳細設計で明示する。
+以下をAuthentication実装設計で明示する。
 
-```text
+```text id="0hqcvn"
 発行
 保存
 取得
@@ -1469,13 +1076,12 @@ Expiration
 更新
 Revocation
 Logout時の失効
-Redis TTL
 ```
 
 Frontend Architecture上の必須Ruleは、
 
-```text
-Backend Credential Lifecycle
+```text id="1h4pby"
+Sanctum Token Lifecycle
 =
 Server-only
 ```
@@ -1484,179 +1090,62 @@ Server-only
 
 ---
 
-## 63. Session / Credential Relation
+## 52. CSRF
 
-通常のLogin完了後、SessionとBackend Credentialは1:1で対応させる。
-
-```text
-1 Better Auth Session
-        │
-        │ 1 : 1
-        ▼
-1 Backend API Credential
-  (Sanctum Token)
-```
-
-複数端末Login：
-
-```text
-Browser A
-   ↓
-Session A
-   ↓
-Sanctum Token A
-
-
-Browser B
-   ↓
-Session B
-   ↓
-Sanctum Token B
-```
-
-Session単位でCredentialを分離する。
-
----
-
-## 64. Session / Credential TTL
-
-Backend Credential TTLは対応するSessionの有効期間を超えないようにする。
-
-```text
-Credential TTL
-<=
-Session Lifetime
-```
-
-Session失効後にCredentialだけが長期間Redisへ残らないようにする。
-
-具体値はAuthentication詳細設計で決定する。
-
----
-
-## 65. 強制Logout
-
-Server SideからSessionを失効可能とする。
-
-対象例：
-
-- User無効化
-- Security Incident
-- Administratorによる強制Logout
-- Credential漏洩の疑い
-- Permission変更に伴う再Authentication
-
-基本処理：
-
-```text
-Session特定
-   ↓
-Sanctum Token失効
-   ↓
-Backend Credential削除
-   ↓
-Better Auth Session削除
-```
-
----
-
-## 66. User無効化
-
-Application User：
-
-```text
-users.is_active = false
-```
-
-となった場合、
-
-- 新規Loginを禁止する
-- 既存Sessionを失効対象とする
-- 対応するSanctum Tokenを失効させる
-- Backend Credentialを削除する
-
-ことを基本方針とする。
-
-具体的なSession検索・失効方式はAuthentication詳細設計で決定する。
-
----
-
-## 67. Redis障害時
-
-RedisからSessionを確認できない場合は安全側に倒す。
-
-```text
-Sessionを確認できない
-        ↓
-Authenticatedとして扱わない
-```
-
-未検証Sessionを有効として扱わない。
-
-Redis障害時にApplication Dataが失われる構成にはしない。
-
-必要に応じてUserへ再Loginを要求する。
-
----
-
-## 68. CSRF
-
-Browser ↔ Next.js AuthenticationについてはBetter Auth / Next.jsが提供する標準Security Mechanismを利用する。
+Browser ↔ Next.js AuthenticationについてはAuth.js / Next.jsのSecurity Mechanismを利用する。
 
 Next.js → LaravelはServer-to-ServerのSanctum Token Authenticationとする。
 
-以下の構成とは分離する。
+したがって、
 
-```text
+```text id="2qae31"
 Browser
 ↓
 Laravel Cookie Authentication
 ```
 
-CSRF対策を独自に無効化せず、それぞれのAuthentication Boundaryに適した標準Mechanismを利用する。
+を採用する構成とは分離する。
+
+CSRF対策を独自に無効化するのではなく、それぞれのAuthentication Boundaryに適したSecurity Mechanismを利用する。
 
 ---
 
-## 69. Open Redirect対策
+## 53. Open Redirect対策
 
 Login後のRedirect先等を外部Inputから受け取る場合、任意External URLへRedirectできないようにする。
 
 例えば、
 
-```text
+```text id="vc7fed"
 /login?callbackUrl=...
 ```
 
-等については、許可済みApplication RouteのみをRedirect先として扱う。
-
-具体的なBetter Auth Redirect MechanismはAuthentication詳細設計で確認する。
+等については、Auth.jsの安全なRedirect Mechanismまたは許可済みApplication Routeのみを利用する。
 
 ---
 
-## 70. Authentication DataのLogging
+## 54. Authentication DataのLogging
 
 以下をLogへ出力しない。
 
-```text
+```text id="7v0ufn"
 Password
 Session Token
 Sanctum Token
 Cookie
 Authorization Header
 Authentication Secret
-Redis Credential
-Encryption Key
 ```
 
 Authentication Failure LogにもCredentialそのものを含めない。
 
 ---
 
-## 71. Authorization Audit
+## 55. Authorization Audit
 
 監査要件に応じて以下を記録できる。
 
-```text
+```text id="hw5u6o"
 User ID
 Action
 Resource Type
@@ -1671,15 +1160,12 @@ Frontend LogをSecurity AuditのAuthorityとはしない。
 
 ---
 
-## 72. Server-only Environment Variable
+## 56. Server-only Environment Variable
 
 以下のAuthentication関連設定はServer-onlyとする。
 
-```text
-Better Auth Secret
-Redis Connection Information
-Redis ACL Credential
-Backend Credential Encryption Key
+```text id="oysp5b"
+AUTH_SECRET
 Laravel API Credential関連設定
 Internal Laravel API URL
 Authentication Secret
@@ -1687,17 +1173,15 @@ Authentication Secret
 
 必要がない限り`NEXT_PUBLIC_*`として公開しない。
 
-具体的な環境変数名はAuthentication / Infrastructure詳細設計で決定する。
-
 ---
 
-## 73. `lib/auth/`
+## 57. `lib/auth/`
 
 Authentication / Frontend Authorizationの共通処理は`lib/auth/`へ配置する。
 
 基本例：
 
-```text
+```text id="6s6j2v"
 lib/
 └── auth/
     ├── auth.ts
@@ -1706,84 +1190,50 @@ lib/
     └── index.ts
 ```
 
-実際のFile構成はBetter Authの設定方式に合わせて調整する。
+実際のFile構成はAuth.jsの設定方式に合わせて調整する。
 
 ---
 
-## 74. `auth.ts`
+## 58. `auth.ts`
 
-`auth.ts`はBetter Auth ConfigurationおよびServer-side Authentication Entry Pointを担当する。
+`auth.ts`はAuth.jsのConfigurationおよびServer-side Authentication Entry Pointを担当する。
 
 概念：
 
-```text
+```text id="23inkd"
 auth.ts
-├── Better Auth Configuration
-├── Session Configuration
-├── Redis Integration
-└── Authentication Entry Point
+├── Auth.js Configuration
+├── auth()
+├── signIn()
+└── signOut()
 ```
-
-具体的なAPIはBetter Authの実装方式確定後に決定する。
 
 Authentication関連処理を無秩序に巨大な`auth.ts`へ集約しない。
 
 ---
 
-## 75. `session.ts`
+## 59. `session.ts`
 
-Session操作Helperを必要に応じて配置する。
+必要に応じてSession操作Helperを配置する。
 
 例：
 
-```text
+```text id="nwjh4e"
 requireSession()
 getCurrentUser()
 ```
 
-Better Auth Sessionを別Stateへ複製するためのHelperにはしない。
+ただしAuth.js Sessionを別Stateへ複製するためのHelperにはしない。
 
 ---
 
-## 76. Backend Credential処理
-
-Backend Credentialの保存・取得・暗号化・復号処理はAuthentication Infrastructureとして分離する。
-
-概念：
-
-```text
-lib/
-└── auth/
-    ├── auth.ts
-    ├── session.ts
-    ├── credential.ts
-    ├── permissions.ts
-    └── index.ts
-```
-
-`credential.ts`等の具体的File名は実装時に決定する。
-
-責務：
-
-```text
-Backend Credential Lookup
-Encryption
-Decryption
-TTL
-Deletion
-```
-
-Feature側でSanctum Tokenを直接管理しない。
-
----
-
-## 77. `permissions.ts`
+## 60. `permissions.ts`
 
 Frontend表示制御用の軽量Permission Helperを必要に応じて配置する。
 
 例：
 
-```text
+```text id="2uk82u"
 canEditEmployee(...)
 canManagePermissions(...)
 ```
@@ -1794,27 +1244,27 @@ Role / Capabilityから明らかなUI制御のみ担当する。
 
 ---
 
-## 78. Feature固有Authorization
+## 61. Feature固有Authorization
 
-Resource / Feature固有のUI Authorizationが複雑になった場合はFeature内部へ配置することを許可する。
+Resource / Feature固有のUI Authorizationが複雑になった場合は、Feature内部へ配置することを許可する。
 
 例：
 
-```text
+```text id="77kzv8"
 features/
 └── employees/
     └── ...
 ```
 
-Shared Authentication Infrastructureは`lib/auth/`へ置く。
+ただしShared Authentication Infrastructureは`lib/auth/`へ置く。
 
 ---
 
-## 79. Authentication Dependency
+## 62. Authentication Dependency
 
 基本Dependencyを以下とする。
 
-```text
+```text id="9m2bde"
 Feature
    ↓
 lib/auth
@@ -1822,7 +1272,7 @@ lib/auth
 
 逆依存は禁止する。
 
-```text
+```text id="1dhu9g"
 lib/auth
    ×
 features
@@ -1832,18 +1282,16 @@ features
 
 ---
 
-## 80. Protected Server Query
+## 63. Protected Server Query
 
 Authentication必須Dataを取得するServer QueryはCurrent Authentication Contextを利用したAPI Client経由でLaravelへアクセスする。
 
-```text
+```text id="l6kxwf"
 Server Query
       ↓
 API Client
       ↓
 Current Authentication Context
-      ↓
-Backend Credential Store
       ↓
 Sanctum Credential
       ↓
@@ -1854,7 +1302,7 @@ Feature側でCredentialを組み立てない。
 
 ---
 
-## 81. Public APIとAuthenticated API
+## 64. Public APIとAuthenticated API
 
 Laravel側でPublic Endpointを提供する場合は、OpenAPI Contract上でPublic / Authenticated Endpointを明確に区別する。
 
@@ -1862,13 +1310,13 @@ API ClientがTokenを自動付与することだけに依存してSecurity要件
 
 ---
 
-## 82. Client Componentへ渡すUser情報
+## 65. Client Componentへ渡すUser情報
 
 Client ComponentへCurrent User情報を渡す場合は必要最小限とする。
 
 概念例：
 
-```ts
+```ts id="06e1jc"
 type CurrentUserView = {
   id: string;
   displayName: string;
@@ -1880,27 +1328,27 @@ Server Session Object全体をClientへ渡すことをDefaultとしない。
 
 ---
 
-## 83. Authorization UI Component
+## 66. Authorization UI Component
 
 必要に応じて以下のようなPresentation Utilityを作成できる。
 
-```text
+```text id="5sdlio"
 <Can>
 <Authorized>
 <PermissionGate>
 ```
 
-初期段階から汎用Authorization Frameworkを構築しない。
+ただし初期段階から汎用Authorization Frameworkを構築しない。
 
 Simpleな条件分岐で十分ならそれを利用する。
 
 ---
 
-## 84. Authorization UI ComponentはSecurity Boundaryではない
+## 67. Authorization UI ComponentはSecurity Boundaryではない
 
 例えば、
 
-```tsx
+```tsx id="kmrn1q"
 <PermissionGate permission="employee.update">
   <EditButton />
 </PermissionGate>
@@ -1912,33 +1360,33 @@ Simpleな条件分岐で十分ならそれを利用する。
 
 ---
 
-## 85. Navigation
+## 68. Navigation
 
 Navigation MenuはFrontend Capabilityに基づいて表示制御する。
 
 例：
 
-```text
+```text id="86u885"
 Access Control
 ```
 
 をPermission管理不可Userへ表示しない。
 
-URL直接入力に対してもServer / Backend側でProtectionする。
+ただしURL直接入力に対してもServer / Backend側でProtectionする。
 
 ---
 
-## 86. Layout Authorization
+## 69. Layout Authorization
 
 Role / Capabilityによって大きくNavigation Structureが異なる場合はServer LayoutでCurrent Sessionを利用してよい。
 
-LayoutへResource単位のAuthorization Logicを集中させない。
+ただしLayoutへResource単位のAuthorization Logicを集中させない。
 
 ---
 
-## 87. Authentication判断フロー
+## 70. Authentication判断フロー
 
-```text
+```text id="d7jxm0"
 Request
    │
    ▼
@@ -1946,7 +1394,7 @@ Public Route？
    │
    ├── Yes
    │    ↓
-   │   Allow
+   │ Allow
    │
    └── No
         │
@@ -1955,24 +1403,24 @@ Authenticated？
         │
         ├── No
         │    ↓
-        │   LoginへRedirect
+        │ LoginへRedirect
         │
         └── Yes
              ↓
-         Next.js Route処理
+        Next.js Route処理
              ↓
-         必要に応じFrontend Authorization
+        必要に応じFrontend Authorization
              ↓
-         Laravel API
+        Laravel API
              ↓
-         Laravel Authorization
+        Laravel Authorization
 ```
 
 ---
 
-## 88. Authorization判断フロー
+## 71. Authorization判断フロー
 
-```text
+```text id="3o8qzt"
 User Action
    │
    ▼
@@ -1980,7 +1428,7 @@ Frontend Capability上で明らかに禁止？
    │
    ├── Yes
    │    ↓
-   │   UI非表示 / Forbidden
+   │ UI非表示 / Forbidden
    │
    └── No
         │
@@ -1995,7 +1443,7 @@ Policy / Authorization
         │
         ├── Allowed
         │    ↓
-        │   Execute
+        │ Execute
         │
         └── Forbidden
              ↓
@@ -2004,13 +1452,13 @@ Policy / Authorization
 
 ---
 
-## 89. 全体Architecture
+## 72. 全体Architecture
 
-```text
+```text id="1y1nuc"
 ┌────────────────────────────────────┐
 │ Browser                            │
 │                                    │
-│ Better Auth Session Cookie         │
+│ Auth.js Session Cookie             │
 │ Client UI                          │
 │ Frontend Capability表示制御       │
 └─────────────────┬──────────────────┘
@@ -2024,67 +1472,35 @@ Policy / Authorization
 │ Server Query                       │
 │ Server Action                      │
 │ Route Handler                      │
-│ Better Auth                        │
+│ Auth.js                            │
 │ Frontend Authorization             │
 │                                    │
-│ Redis Client                       │
-│ Backend Credential Management      │
-└─────────┬─────────────────┬────────┘
-          │                 │
-          │                 │
-          │                 ▼
-          │        ┌──────────────────┐
-          │        │ Redis            │
-          │        │                  │
-          │        │ better-auth:*    │
-          │        │ backend-         │
-          │        │ credential:*     │
-          │        └──────────────────┘
-          │
-          │ Sanctum Token
-          ▼
+│ Sanctum Token                      │
+└─────────────────┬──────────────────┘
+                  │
+                  ▼
 ┌────────────────────────────────────┐
 │ Laravel                            │
 │                                    │
-│ User Authentication                │
 │ Sanctum Authentication             │
 │ Policy / Authorization             │
 │ Application                        │
 │ Domain                             │
 │                                    │
 │ Security Authority                 │
-└─────────────────┬──────────────────┘
-                  │
-                  ▼
-┌────────────────────────────────────┐
-│ PostgreSQL                         │
-│                                    │
-│ Application Data                   │
-│ users                              │
-│ personal_access_tokens             │
 └────────────────────────────────────┘
 ```
 
 ---
 
-## 90. 責務境界
+## 73. 責務境界
 
 最終的な責務を以下とする。
 
-```text
-Laravel
+```text id="frf8l0"
+Auth.js
 =
-Application User Authentication
-
-Better Auth
-=
-Browser ↔ Next.js Session Management
-
-Redis
-=
-Better Auth Session
-+
-Encrypted Backend Credential
+Browser ↔ Next.js Authentication
 
 Next.js Proxy
 =
@@ -2096,7 +1512,6 @@ Frontend Authentication Context
 Frontend Authorization
 Early Rejection
 UI Capability
-Backend Credential Management
 
 Laravel Sanctum
 =
@@ -2109,76 +1524,18 @@ Resource / Business Authorization
 Laravel Domain
 =
 Business Invariant
-
-PostgreSQL
-=
-Laravel所有Application Data
 ```
 
 ---
 
-## 91. 技術選定と詳細設計の境界
-
-本Architectureでは以下を確定する。
-
-- Better AuthをBrowser Session Managementへ利用する
-- RedisをBetter Auth Session Storeへ利用する
-- Redis 1 Instanceを利用する
-- Better Auth SessionとBackend CredentialをNamespace分離する
-- Redis ACLで責務を分離する
-- Sanctum TokenをRedisへ暗号化保存する
-- Application User AuthenticationはLaravelが担当する
-- `login_id + password`をLaravelで検証する
-- Next.jsからPostgreSQLへ直接接続しない
-- Next.js ↔ LaravelはLaravel Sanctumを利用する
-- Sanctum TokenをBrowserへ公開しない
-- LaravelをAuthorizationのSecurity Authorityとする
-
-以下はAuthentication詳細設計で確定する。
-
-- Better AuthとLaravel認証結果の具体的なSession生成方式
-- Better Auth内部User表現
-- Better Auth Session Payload
-- Better Auth Server APIの具体的な利用方法
-- Better Auth Client Integration
-- Redis Key Schema
-- Redis ACL Rule
-- Session IdentifierとCredential Keyの関連付け
-- Session Expiration
-- Redis TTL
-- Session Renewal
-- Session Rotation
-- Sanctum Token Lifetime
-- Sanctum Token Encryption Algorithm
-- Encryption Key Management
-- Login / Logout実装
-- 強制Logout
-- 全端末Logout
-- User無効化時のSession検索方式
-- Error Handling
-- Retry / Recovery
-- Redis障害時処理
-- Cookie具体設定
-
----
-
-## 92. 決定事項
+## 74. 決定事項
 
 Frontendの認証・認可として、以下を正式採用する。
 
 - AuthenticationとAuthorizationを明確に分離する
-- Application User AuthenticationはLaravelを使用する
-- Application Loginは`login_id + password`を使用する
-- Browser ↔ Next.js Session ManagementはBetter Authを使用する
-- Better Auth SessionをFrontend AuthenticationのSource of Truthとする
-- Better Auth Session StoreはRedisを使用する
-- RedisはMVPで1 Instance利用する
-- Better Auth SessionとBackend CredentialはKey Namespaceを分離する
-- Redis ACLでBetter Auth / Backend Credentialのアクセス権限を分離する
-- Better Auth SessionへSanctum Tokenを直接格納しない
-- Sanctum TokenはRedisのBackend Credential領域へ暗号化保存する
-- Next.jsからPostgreSQLへ直接接続しない
-- Application DataはLaravel API経由で利用する
+- Browser ↔ Next.js AuthenticationはAuth.jsを使用する
+- Auth.js SessionをFrontend AuthenticationのSource of Truthとする
+- Auth.js Session StoreはPostgreSQLを使用する
 - Next.js ↔ LaravelはSanctum Token Authenticationとする
 - BrowserからLaravelへ直接Authenticationしない
 - BrowserからLaravel APIを直接利用しない
@@ -2186,9 +1543,9 @@ Frontendの認証・認可として、以下を正式採用する。
 - Sanctum TokenをClient Componentへ渡さない
 - Sanctum TokenをPropsへ渡さない
 - Sanctum TokenをBrowser Storageへ保存しない
-- Server側Session取得にはBetter AuthのServer Side機能を利用する
+- Server側Session取得にはAuth.jsのServer APIを利用する
 - Client側Session取得は本当に必要な場合のみ利用する
-- Client Authentication ContextをApplication全体へ無条件配置しない
+- `SessionProvider`をApplication全体へ無条件配置しない
 - Protected Routeの粗い入口制御にはNext.js Proxyを利用する
 - ProxyではAuthentication / Route大分類のみを基本的に扱う
 - Resource単位の複雑なAuthorizationをProxyへ置かない
@@ -2211,7 +1568,7 @@ Frontendの認証・認可として、以下を正式採用する。
 - Server Action側で確認していてもLaravel Authorizationを省略しない
 - Route HandlerもBrowser到達可能なTrust Boundaryとして扱う
 - Route Handlerを無認証Laravel Proxyにしない
-- SessionへUser Entity全体を格納しない
+- Auth.js SessionへUser Entity全体を格納しない
 - Sessionへ大量のResource Permission Dataを保持しない
 - Clientへ必要最小限のUser / Capability情報のみ公開する
 - Session CapabilityのFreshnessをSecurity Authorityとはしない
@@ -2219,22 +1576,19 @@ Frontendの認証・認可として、以下を正式採用する。
 - 未Authentication UserはLoginへ誘導する
 - Permission不足はForbiddenとして扱う
 - 403 / 404のSecurity PolicyはLaravel側で決定する
-- LogoutではBetter Auth SessionとSanctum Token双方のLifecycleを考慮する
-- Backend Credential LifecycleはServer-onlyで管理する
-- Redis障害時に未検証SessionをAuthenticatedとして扱わない
+- LogoutではAuth.js SessionとSanctum Token双方のLifecycleを考慮する
+- Sanctum Token LifecycleはServer-onlyで管理する
 - CSRF対策は各Authentication Boundaryに適した標準Mechanismを利用する
 - Open Redirectを防止する
 - Authentication CredentialをLoggingしない
 - Laravel側Audit LogをAuthorization AuditのSource of Truthとする
-- Authentication Secret / Redis Credential / Encryption KeyはServer Environmentへ限定する
+- Authentication Secret / Internal CredentialはServer Environmentへ限定する
 - Authentication共通処理は`lib/auth/`へ配置する
-- Backend Credential管理をFeatureから分離する
 - `lib/auth`からFeatureへの逆依存を禁止する
 - ClientへServer Session Object全体を無条件に渡さない
 - Authorization UI ComponentはPresentation Utilityとして扱う
 - Authorization UI ComponentをSecurity Boundaryとは扱わない
 - Navigation非表示と直接URL Protectionの両方を行う
 - Laravel Authorizationを常に最終防衛線とする
-- Better AuthとLaravel認証結果を連携してSessionを生成する具体方式はAuthentication詳細設計で確定する
 
 以上をFrontendの認証・認可方針とする。

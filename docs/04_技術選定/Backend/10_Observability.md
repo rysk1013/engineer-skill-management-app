@@ -1431,7 +1431,7 @@ Logs / Metrics / TracesすべてでSensitive Dataを記録禁止とする。
 ```text
 Password
 Sanctum Token
-Auth.js Session Token
+Better Auth Session Token
 Authorization Header
 Cookie
 API Key

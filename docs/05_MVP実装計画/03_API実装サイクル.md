@@ -389,7 +389,7 @@ Browser
    ↓
 Next.js
    ↓
-Auth.js Session
+Better Auth Session
    ↓
 BFF
    ↓
@@ -416,7 +416,7 @@ BFFではBackendのDomain Logicを再実装しない。
 
 BFFの主な責務は以下とする。
 
-- Auth.js Session確認
+- Better Auth Session確認
 - 認証情報の取得
 - Sanctum Tokenの利用
 - Backend API呼び出し
