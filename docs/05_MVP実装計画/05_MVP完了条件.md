@@ -170,7 +170,7 @@ Dashboard
 
 - [ ] ログインできる
 - [ ] ログアウトできる
-- [ ] Auth.js Sessionを利用できる
+- [ ] Better Auth Sessionを利用できる
 - [ ] BFFから認証済みユーザーを識別できる
 - [ ] Sanctum Tokenを利用してLaravel APIへアクセスできる
 - [ ] Laravelで認証済みユーザーを識別できる
@@ -386,7 +386,7 @@ AuthenticationおよびAuthorizationをMVP完了の重点確認項目とする�
 
 ## Authentication
 
-- [ ] Auth.js Sessionが正常に機能する
+- [ ] Better Auth Sessionが正常に機能する
 - [ ] Session Storeが正常に機能する
 - [ ] BFF → Laravel間でSanctum Token認証が機能する
 - [ ] 未認証アクセスが拒否される
