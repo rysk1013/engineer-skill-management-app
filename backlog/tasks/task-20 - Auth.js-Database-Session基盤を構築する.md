@@ -1,10 +1,10 @@
 ---
 id: TASK-20
 title: Better Auth / Redis Session基盤を構築する
-status: In Progress
+status: To Do
 assignee: []
 created_date: '2026-10-06 12:17'
-updated_date: '2026-10-07 03:58'
+updated_date: '2026-10-07 08:34'
 labels:
   - phase-2
   - frontend
@@ -12,15 +12,15 @@ labels:
   - better-auth
   - redis
 milestone: m-2
-dependencies: []
+dependencies:
+  - TASK-26
 references:
   - docs/04_技術選定/01_アプリケーション構成.md
   - docs/04_技術選定/02_データベース.md
-  - docs/04_技術選定/README.md
+  - docs/04_技術選定/03_認証方式.md
   - docs/03_システム設計/02_認証・認可/01_認証全体設計.md
-  - docs/03_システム設計/02_認証・認可/02_Next.js-Auth.js設計.md
-  - docs/03_システム設計/01_データベース/09_Auth.js-Sessionテーブル設計.md
-  - docs/03_システム設計/01_データベース/10_Sanctum-Token保存方式.md
+  - docs/03_システム設計/02_認証・認可/02_Next.js-Better-Auth設計.md
+  - docs/03_システム設計/02_認証・認可/03_Laravel-Sanctum設計.md
 priority: high
 type: feature
 ordinal: 20000
@@ -60,7 +60,7 @@ Better Authを利用してBrowserとNext.js間のSession管理基盤を構築す
 ## Implementation Plan
 
 <!-- SECTION:PLAN:BEGIN -->
-1. Better Auth / Redisの現行技術選定と認証設計を確認する
+1. TASK-26で整理したBetter Auth / Redisの現行技術選定と認証設計を確認する
 2. Better AuthをFrontendへ導入する
 3. Redis接続基盤をFrontend Server側へ追加する
 4. Better AuthのSession StoreをRedisとして構成する
@@ -70,5 +70,5 @@ Better Authを利用してBrowserとNext.js間のSession管理基盤を構築す
 8. Next.js Server側からSessionを取得・失効できる構成を追加する
 9. Session作成・取得・期限・失効・非露出に関するTestを追加する
 10. lint / typecheck / test / buildを実行する
-11. 旧Auth.js / PostgreSQL Session前提の関連ドキュメントを現行構成へ更新する
+11. TASK-26で更新した関連ドキュメントとの整合性を最終確認する
 <!-- SECTION:PLAN:END -->
