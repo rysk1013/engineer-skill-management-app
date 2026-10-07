@@ -267,9 +267,11 @@ validate_environment() {
     git cat-file -e "${AFTER_SHA}^{commit}" 2>/dev/null \
       || die "AFTER_SHA is not a valid commit: ${AFTER_SHA}"
 
-    if ! is_zero_sha "$BEFORE_SHA"; then
-      git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null \
-        || die "BEFORE_SHA is not a valid commit: ${BEFORE_SHA}"
+    if ! is_zero_sha "$BEFORE_SHA" \
+      && ! git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+      log_warn "BEFORE_SHA is not available: ${BEFORE_SHA}"
+      log_info "falling back to full sync"
+      SYNC_MODE="full"
     fi
   fi
 
