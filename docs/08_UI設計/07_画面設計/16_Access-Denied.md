@@ -825,7 +825,8 @@ Backend内部Messageをそのまま利用者へ表示しない。
 - Middleware構成
 - Permission判定ロジック
 - 403 Response Bodyの具体型
-- Auth.js Session処理
+- Better Auth Session処理
+- Backend認証処理
 - Sanctum認証処理
 - BFF Error変換実装
 - Redirect実装
