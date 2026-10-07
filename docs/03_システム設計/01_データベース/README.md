@@ -10,6 +10,9 @@ Database SchemaのSource of TruthはLaravel Migrationです。このディレク
 - Primary Keyは原則として`bigint`を使用する
 - SchemaとSeederはLaravel側で一元管理する
 - Next.js側へ別のMigration Systemを導入しない
+- Next.jsからPostgreSQLへ直接接続しない
+- Better Auth SessionはRedisで管理し、PostgreSQLへSession Tableを作成しない
+- Backend CredentialはRedisで管理し、PostgreSQLへCredential Tableを作成しない
 - Domain RuleとLaravel Validationに加え、PK、FK、UNIQUE、CHECK Constraintでも整合性を守る
 - Foreign Keyの削除・更新は`RESTRICT`を基本とし、CASCADE DELETEとSET NULLは原則使用しない
 - Soft Deleteは原則使用せず、業務上の無効化には`is_active`などの状態を使用する
@@ -22,7 +25,7 @@ Database SchemaのSource of TruthはLaravel Migrationです。このディレク
 Department
     │ 1:N
     ▼
-Employee ─────── User ─────── AuthSession
+Employee ─────── User
     │               │
     │               ├── SubManagerAssignment ── Employee
     │               └── TeamLeaderAssignment ── Employee
@@ -40,6 +43,8 @@ SkillCategory
 
 Laravel Sanctumの`personal_access_tokens`はInfrastructure Tableとして使用します。Domain中心のER図からは省略しますが、Database Schemaには含まれます。
 
+Better Auth SessionおよびNext.js BFFが管理するBackend CredentialはRedisへ保存するため、PostgreSQL Schemaには含めません。
+
 ## Table一覧
 
 | 領域 | Table | 主な役割 |
@@ -52,8 +57,7 @@ Laravel Sanctumの`personal_access_tokens`はInfrastructure Tableとして使用
 | Skill Management | `skill_categories` | スキル分類Master |
 | Skill Management | `skills` | 技術・スキルMaster |
 | Skill Management | `employee_skills` | 社員のSkill、Level、実務経験、経験期間、最終利用年月 |
-| Authentication | `auth_sessions` | Auth.js Database SessionとSession単位のSanctum Token |
-| Infrastructure | `personal_access_tokens` | Laravel Sanctum標準のToken情報 |
+| Authentication / Infrastructure | `personal_access_tokens` | Laravel SanctumによるBackend API Authentication |
 
 ## 設計ドキュメント
 
@@ -96,7 +100,7 @@ Laravel Sanctumの`personal_access_tokens`はInfrastructure Tableとして使用
 
 ### 7. Migration Ownership
 
-[Migration Ownership](./07_Migration-Ownership.md)では、業務Table、Auth.js Session Table、Sanctum TableをLaravel Migrationで一元管理する方針を定義します。
+[Migration Ownership](./07_Migration-Ownership.md)では、PostgreSQL SchemaをLaravel Migrationで一元管理し、Better Auth SessionおよびBackend CredentialはRedis管理のためDatabase Migration対象外とする方針を定義します。
 
 Local、CI、Stagingで同じMigration手順を利用し、`php artisan migrate`でSchemaを構築できる状態を保ちます。
 
@@ -112,21 +116,20 @@ Local、CI、Stagingで同じMigration手順を利用し、`php artisan migrate`
 
 現在日時に依存するValidationはLaravel側で実行し、DatabaseのCHECK Constraintには時間経過に依存しない構造的なRuleだけを定義します。
 
-### 9. Auth.js Sessionテーブル設計
+### 認証・Session設計
 
-[Auth.js Sessionテーブル設計](./09_Auth.js-Sessionテーブル設計.md)では、`auth_sessions`のColumn、Cookie、期限、Sanctum Token、Login／Logout、複数端末Sessionを定義します。
+Browser Session、Better Auth、Redis、Backend Credential、Laravel Sanctumの詳細は、
+[Next.js Better Auth Session管理 設計](../02_認証・認可/02_Next.js-Better-Auth設計.md)
+を参照します。
 
-- BrowserにはSession Cookieだけを保持する
-- Sanctum TokenをBrowserへ公開しない
-- SessionとSanctum Tokenを1対1で対応させる
-- Logout時はAuth.js SessionとSanctum Tokenを両方失効する
-- SessionはSoft Deleteせず、失効時に削除する
+主な方針：
 
-### 10. Sanctum Token保存方式
-
-[Sanctum Token保存方式](./10_Sanctum-Token保存方式.md)では、MVPでSanctum Tokenを`auth_sessions.sanctum_token`へApplication Level Encryptionして保存する方針を定義します。
-
-複数Backend、Refresh Token、Credential Rotationなどが必要になった場合は、専用Credential Tableへの分離を再検討します。
+- Browser Session ManagementはBetter Authを利用する
+- Better Auth Session StoreはRedisを利用する
+- Next.jsからPostgreSQLへ直接接続しない
+- Sanctum TokenはRedisの`backend-credential:*`領域へ暗号化して保存する
+- Better Auth SessionとBackend Credentialは別Namespaceで管理する
+- LaravelをApplication User AuthenticationおよびAuthorizationの最終Authorityとする
 
 ## Source of Truthと責務
 
@@ -137,7 +140,12 @@ Local、CI、Stagingで同じMigration手順を利用し、`php artisan migrate`
 | Database Schema | Laravel Migration |
 | API上のData Format | OpenAPI |
 | MigrationとSeederの実行・管理 | Laravel Backend |
-| Auth.js Sessionの利用 | Next.js BFF |
+| Better Auth Sessionの利用 | Next.js BFF |
+| Better Auth Session Store | Redis |
+| Backend Credential Store | Redis |
+| Application User Authentication | Laravel Backend |
+| Backend API Authentication | Laravel Sanctum |
+| Business Authorization | Laravel Backend |
 
 ## Schema変更フロー
 
@@ -155,6 +163,8 @@ API / Application / Documentationの整合性確認
 
 既存Migrationを安易に書き換えず、共有環境へ適用済みのSchema変更は新しいMigrationとして追加します。
 
+Better Auth SessionやBackend Credentialの変更はPostgreSQL Schema変更とは分離し、認証・Redis設計側で管理します。
+
 ## 推奨する読み順
 
 1. [Entity](./01_Entity.md)と[ER図](./02_ER図.md)で、管理対象とRelationを把握する。
@@ -162,7 +172,7 @@ API / Application / Documentationの整合性確認
 3. [PostgreSQLテーブル一覧・Migration](./04_PostgreSQLテーブル一覧・Migration.md)と[Foreign Keyルール](./05_Foreign-Keyルール.md)で、Schema全体と削除・更新規則を確認する。
 4. [Laravel Migration設計](./06_Laravel-Migration設計.md)と[Migration Ownership](./07_Migration-Ownership.md)で、Schemaの実装・管理方法を確認する。
 5. [Date・Time設計](./08_Date・Time設計.md)で、外部表現を含む日時Ruleを確認する。
-6. 認証を実装するときは、Auth.js SessionとSanctum Tokenの設計を確認する。
+6. 認証を実装するときは、[Next.js Better Auth Session管理 設計](../02_認証・認可/02_Next.js-Better-Auth設計.md)でBetter Auth Session、Redis、Backend Credential、Laravel Sanctumの設計を確認する。
 
 ## 文書管理ルール
 
@@ -170,4 +180,5 @@ API / Application / Documentationの整合性確認
 - Domain RuleをConstraintへ反映するときは、Laravel ValidationとDomain Invariantとの責務分担を明記します。
 - ConstraintとIndexには、目的が分かる明示的な名前を付けます。
 - Migrationを追加した場合は、Rollbackと実PostgreSQLでのIntegration Testを確認します。
+- Better Auth SessionおよびBackend CredentialはPostgreSQL Schemaとは分離して設計します。
 - 過去の設計は上書きせず、[`archive/`](./archive/)へ保管します。

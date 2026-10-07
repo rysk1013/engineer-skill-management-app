@@ -477,7 +477,7 @@ Administrator:
 
 認証プロバイダとの紐付けに必要な内部情報は別途 Authentication 設計に従います。
 
-本 API では Auth.js の Session 情報や Credential を直接管理しません。
+本APIではBetter Auth SessionやBackend Credentialを直接管理しません。
 
 ---
 
@@ -1610,7 +1610,8 @@ INTERNAL_SERVER_ERROR
 以下の内部情報は返しません。
 
 ```text
-Auth.js Session
+Better Auth Session
+Backend Credential
 Sanctum Token
 Password
 Credential

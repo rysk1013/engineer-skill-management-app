@@ -39,8 +39,7 @@ Next.js側ではMigrationを管理しない。
 
 ### Authentication / Infrastructure
 
-9. auth_sessions
-10. personal_access_tokens
+9. personal_access_tokens
 
 ---
 
@@ -325,32 +324,7 @@ Domainでは年月として扱い、
 
 ---
 
-## 11. auth_sessions
-
-| Column | Type | NULL | Constraint |
-| --- | --- | --- | --- |
-| id | bigint | NOT NULL | PK |
-| user_id | bigint | NOT NULL | FK |
-| session_token | varchar | NOT NULL | UNIQUE |
-| expires_at | timestamptz | NOT NULL | |
-| sanctum_token | text | NOT NULL | |
-| created_at | timestamptz | NOT NULL | |
-| updated_at | timestamptz | NOT NULL | |
-
-Auth.jsのDatabase Sessionを管理する。
-
-`sanctum_token` は平文保存せず、
-Application Level Encryptionを利用する。
-
-User削除時：
-
-    ON DELETE CASCADE
-
-とする。
-
----
-
-## 12. personal_access_tokens
+## 11. personal_access_tokens
 
 Laravel Sanctum標準Schemaを利用する。
 
@@ -371,7 +345,7 @@ Sanctum標準構造を不必要に変更しない。
 
 ---
 
-## 13. Foreign Key Policy
+## 12. Foreign Key Policy
 
 ### Business Data
 
@@ -382,12 +356,6 @@ Sanctum標準構造を不必要に変更しない。
 | skill_categories | skills | RESTRICT |
 | employees | employee_skills | RESTRICT |
 | skills | employee_skills | RESTRICT |
-
-### Authentication
-
-| Parent | Child | ON DELETE |
-| --- | --- | --- |
-| users | auth_sessions | CASCADE |
 
 ### Assignment
 
@@ -400,17 +368,13 @@ Sanctum標準構造を不必要に変更しない。
 
 ---
 
-## 14. Soft Delete Policy
+## 13. Soft Delete Policy
 
 Laravel SoftDeletesは原則使用しない。
 
 Master / Business Data：
 
     is_active = false
-
-Session：
-
-    DELETE
 
 Assignment：
 
@@ -430,7 +394,7 @@ Employeeの退職は、
 
 ---
 
-## 15. Migration順序
+## 14. Migration順序
 
 Foreign Key依存関係を考慮する。
 
@@ -442,29 +406,27 @@ Foreign Key依存関係を考慮する。
 6. create_employee_skills_table
 7. create_sub_manager_assignments_table
 8. create_team_leader_assignments_table
-9. create_auth_sessions_table
-10. create_personal_access_tokens_table
+9. create_personal_access_tokens_table
 
 ---
 
-## 16. Rollback順序
+## 15. Rollback順序
 
 Migrationの逆順とする。
 
 1. personal_access_tokens
-2. auth_sessions
-3. team_leader_assignments
-4. sub_manager_assignments
-5. employee_skills
-6. skills
-7. skill_categories
-8. users
-9. employees
-10. departments
+2. team_leader_assignments
+3. sub_manager_assignments
+4. employee_skills
+5. skills
+6. skill_categories
+7. users
+8. employees
+9. departments
 
 ---
 
-## 17. Initial Index
+## 16. Initial Index
 
 ### departments
 
@@ -507,18 +469,13 @@ Migrationの逆順とする。
     INDEX(employee_id)
     INDEX(skill_id)
 
-### auth_sessions
-
-    UNIQUE(session_token)
-    INDEX(user_id)
-
 ### personal_access_tokens
 
 Laravel Sanctum標準Indexを利用する。
 
 ---
 
-## 18. Additional Index
+## 17. Additional Index
 
 以下は実際のQuery / EXPLAINを確認してから追加する。
 
@@ -536,13 +493,11 @@ Laravel Sanctum標準Indexを利用する。
 
     employee_skills.is_active
 
-    auth_sessions.expires_at
-
 MVP段階では必要性のないIndexを大量に作らない。
 
 ---
 
-## 19. Seeder
+## 18. Seeder
 
 MigrationとInitial Dataは分離する。
 
@@ -560,7 +515,7 @@ Seeder候補：
 
 ---
 
-## 20. Initial Administrator
+## 19. Initial Administrator
 
 初期構築時に最低1人、
 
@@ -585,7 +540,7 @@ Permission Manager最低1人Ruleを満たす。
 
 ---
 
-## 21. Permission Manager Concurrency
+## 20. Permission Manager Concurrency
 
 Permission Managerを最低1人維持するRuleは、
 単純なCHECK Constraintでは保証できない。
@@ -610,7 +565,7 @@ Application LayerでTransactionを利用する。
 
 ---
 
-## 22. Domainとの対応
+## 21. Domainとの対応
 
 ### Employee Management
 
@@ -656,15 +611,14 @@ Aggregate Root：
 
 Tables：
 
-    auth_sessions
     personal_access_tokens
 
 Domainの中心ではなく、
-Authentication / Infrastructureとして扱う。
+Laravel SanctumのAuthentication Infrastructureとして扱う。
 
 ---
 
-## 23. Database全体構成
+## 22. Database全体構成
 
     PostgreSQL
     │
@@ -682,8 +636,7 @@ Authentication / Infrastructureとして扱う。
     │   ├── skills
     │   └── employee_skills
     │
-    └── Authentication
-        ├── auth_sessions
+    └── Authentication / Infrastructure
         └── personal_access_tokens
 
 Database：
