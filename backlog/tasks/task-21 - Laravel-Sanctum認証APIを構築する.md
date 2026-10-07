@@ -4,6 +4,7 @@ title: Laravel Sanctum認証APIを構築する
 status: To Do
 assignee: []
 created_date: '2026-10-06 12:18'
+updated_date: '2026-10-07 09:30'
 labels:
   - phase-2
   - backend
@@ -14,7 +15,6 @@ dependencies: []
 references:
   - docs/03_システム設計/02_認証・認可/01_認証全体設計.md
   - docs/03_システム設計/02_認証・認可/03_Laravel-Sanctum設計.md
-  - docs/03_システム設計/01_データベース/10_Sanctum-Token保存方式.md
 priority: high
 type: feature
 ordinal: 21000
