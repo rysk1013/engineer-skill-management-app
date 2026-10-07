@@ -211,4 +211,4 @@ Sequence、CHECK Constraint、Transaction、LockなどのPostgreSQL固有動作�
 - Architectureを変更した場合は、Domain設計、System Design、Test、OpenAPIへの影響を確認します。
 - Frameworkの都合だけでDomainやApplicationの依存方向を逆転させません。
 - 文書と実装が異なる場合は、どちらを正とするか確認し、差異を解消します。
-- DDDの旧設計は`../DDD設計/90_archive/`へ移動します。Laravel内部設計を退避する場合も、保存先を明示して関連リンクを更新します。
+- DDDの旧設計は`../DDD設計/99_archive/`へ移動します。Laravel内部設計を退避する場合も、保存先を明示して関連リンクを更新します。

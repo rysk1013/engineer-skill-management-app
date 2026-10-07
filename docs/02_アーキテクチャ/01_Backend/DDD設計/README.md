@@ -137,7 +137,7 @@ PostgreSQL
 - [Laravel内部設計](../Laravel/README.md) — 本設計の前提となる個別Rule
 - [要件定義](../../../01_要件定義/README.md) — Epic、User Story、Acceptance Criteria
 - [システム設計](../../../03_システム設計/README.md) — Database、認証・認可、APIの具体設計
-- [`90_archive`](./90_archive/) — 現在の設計へ統合される前の旧文書
+- [`99_archive`](./99_archive/) — 現在の設計へ統合される前の旧文書
 
 ## 推奨する読み順
 
@@ -154,4 +154,4 @@ PostgreSQL
 - Aggregate境界を変更した場合は、Repository、Transaction、API、Read Modelへの影響を確認します。
 - DDD用語と要件定義・コード上の業務用語を揃えます。
 - Framework固有のClassやEloquent ModelをDomain設計へ持ち込みません。
-- 旧設計は削除や上書きをせず、`90_archive/`へ移動します。
+- 旧設計は削除や上書きをせず、`99_archive/`へ移動します。
