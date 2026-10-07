@@ -46,8 +46,12 @@ Monorepo
 - Frontend / BFF には Next.js を採用する
 - Backend API には Laravel を採用する
 - Database には PostgreSQL を採用する
-- Browser Authentication には Auth.js を採用する
+- Application User Authentication は Laravel が担当する
+- Browser Session Management には Better Auth を採用する
+- Better Auth Session Store には Redis を採用する
 - Next.js → Laravel API 間の Authentication には Laravel Sanctum を採用する
+- Backend Credential は Redis へ暗号化して保存する
+- Next.js から PostgreSQL へ直接接続しない
 - Frontend / Backend 間の API Contract は OpenAPI で管理する
 - OpenAPI First を採用する
 - Local Development Environment は Docker を利用する
@@ -96,10 +100,12 @@ Monorepo
 | Frontend / BFF | Next.js / TypeScript |
 | Backend API | PHP / Laravel |
 | Database | PostgreSQL |
-| Browser Authentication | Auth.js |
-| Browser Session | Auth.js Database Session |
-| Session Store | PostgreSQL |
+| Application User Authentication | Laravel |
+| Browser Session Management | Better Auth |
+| Browser Session Store | Redis |
+| Backend Credential Store | Redis（Application Level Encryption） |
 | Backend API Authentication | Laravel Sanctum |
+| Authentication / Authorization | Laravelを最終Authorityとする |
 | API Contract | OpenAPI First |
 | OpenAPI Lint / Bundle | Redocly CLI |
 | TypeScript Type Generation | openapi-typescript |
@@ -158,26 +164,38 @@ Database の技術選定と Data Ownership の基本方針を管理する。
 
 - PostgreSQL を採用
 - Application Data は Laravel が所有
-- Auth.js Data は Next.js / Auth.js が所有
-- Next.js から Application Table へ直接アクセスしない
+- PostgreSQL Schema と Migration は Laravel が一元管理する
+- Next.js から PostgreSQL へ直接接続しない
+- Better Auth Session は Redis に保存する
+- Backend Credential は Redis へ暗号化して保存する
+- Redis は MVP で 1 Instance とし、Namespace と ACL で Access 権限を分離する
 - Application Validation / Domain Rule / Database Constraint を組み合わせる
 - Primary Key は `bigint`
 - PostgreSQL Sequence を利用可能な構成
 - Transaction Isolation は `READ COMMITTED` を基本とする
 - 必要な箇所では Pessimistic Lock を利用する
 - Backend Test でも PostgreSQL を利用する
-- Redis / NoSQL / SQLite を Primary Database として採用しない
+- Redis / NoSQL / SQLite を Application Data の Primary Database として採用しない
 
 Data Ownership：
 
 ```text
 PostgreSQL
-├── Application Data
-│   └── Owner: Laravel
-│
-└── Auth.js Data
-    └── Owner: Next.js / Auth.js
+└── Laravel Backend
+    ├── Application Data
+    └── Sanctum personal_access_tokens
+
+Redis
+├── better-auth:*
+│   └── Better Auth Session
+└── backend-credential:*
+    └── Encrypted Backend Credential
 ```
+
+PostgreSQL への直接アクセスは Laravel Backend に限定する。
+
+Redis は Authentication 用の Session / Credential Store として使用し、
+Application Data の Primary Database には使用しない。
 
 ---
 
@@ -189,25 +207,47 @@ Browser、Next.js、Laravel 間の Authentication Architecture を管理する�
 
 主な決定：
 
-- Browser Authentication に Auth.js を採用
-- Auth.js Database Session を採用
-- Session Store に PostgreSQL を採用
-- Next.js → Laravel API の Authentication に Laravel Sanctum を採用
+- Application User Authentication は Laravel が担当する
+- Login Credential は `login_id + password` を使用する
+- Browser Session Management には Better Auth を採用する
+- Better Auth Session の保存先は Redis とする
+- Next.js → Laravel API の Authentication には Laravel Sanctum を採用する
 - Sanctum Token を Browser へ公開しない
+- Backend Credential は Better Auth Session と分離して Redis へ暗号化保存する
+- Better Auth Session と Backend Credential は 1 対 1 を基本とする
+- Redis は MVP で 1 Instance とし、Namespace と ACL で Access 権限を分離する
 - Authentication と Authorization を分離する
-- Session と Sanctum Token の Lifecycle を対応させる
-- Redis Session Store は MVP では採用しない
+- 最終的な Authorization は Laravel が担当する
+- Better Auth Session と Sanctum Token の Lifecycle を整合させる
+- Next.js から PostgreSQL へ直接接続しない
+- Laravel Authentication 結果から Better Auth Session を成立させる具体方式は、公式 API の検証後に確定する
 
 基本構成：
 
 ```text
 Browser
-   ↓ Auth.js Session
+   │ Better Auth Session Cookie
+   ▼
 Next.js
 Frontend / BFF
-   ↓ Laravel Sanctum Token
+   │ Laravel Sanctum Token
+   ▼
 Laravel
 Backend API
+   │
+   ▼
+PostgreSQL
+```
+
+Session / Credential Store：
+
+```text
+Redis
+├── better-auth:*
+│   └── Better Auth Session
+│
+└── backend-credential:*
+    └── Encrypted Backend Credential
 ```
 
 具体的な Login / Logout / Token 発行・失効などは Authentication 詳細設計で管理する。
@@ -449,7 +489,8 @@ Why?
 例：
 
 - PostgreSQL を採用する
-- Auth.js を採用する
+- Better Auth を採用する
+- Redis を Session / Credential Store として採用する
 - Laravel Sanctum を採用する
 - Redocly CLI を採用する
 
@@ -481,15 +522,20 @@ Dependency?
 ```text
 技術選定
 ↓
-Auth.js Database Session を採用
+Better Auth を採用
+Session / Credential Store に Redis を採用
+Backend API Authentication に Laravel Sanctum を採用
 
 System Design
 ↓
-Session Table
+Better Auth Session Management
+Redis Key / Namespace Design
+Backend Credential Encryption / Storage
 Session Timeout
 Login Flow
 Logout Flow
 Cookie Configuration
+Token Revocation
 ```
 
 同様に、
@@ -705,7 +751,7 @@ Top Level では以下を Source of Truth とする。
 → PostgreSQL / Data Ownership
 
 03_認証方式.md
-→ Auth.js / Session / Sanctum
+→ Better Auth / Redis / Sanctum
 
 04_API・OpenAPI.md
 → API Contract / OpenAPI
