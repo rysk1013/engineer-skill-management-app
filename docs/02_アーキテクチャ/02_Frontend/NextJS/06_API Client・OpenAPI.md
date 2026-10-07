@@ -342,7 +342,8 @@ API Clientは以下へアクセスする可能性がある。
 ```text
 Sanctum Token
 Internal API URL
-Auth.js Server Session
+Better Auth Server Session
+Backend Credential
 Server-only Environment Variable
 Authentication Header
 Trace Context
@@ -418,7 +419,7 @@ BrowserとLaravel APIではAuthentication Boundaryを分離する。
 ```text
 Browser
    │
-   │ Auth.js Session
+   │ Better Auth Session Cookie
    ▼
 Next.js Server
    │
@@ -428,6 +429,16 @@ Laravel API
 ```
 
 BrowserはLaravel Sanctum Tokenを扱わない。
+
+Better Auth SessionはRedisで管理する。
+
+Backend CredentialはBetter Auth Sessionと分離し、
+Redisへ暗号化して保存する。
+
+Next.js ServerはBetter Auth Sessionを確認し、
+対応するBackend Credentialを取得してLaravel APIへアクセスする。
+
+Next.jsからPostgreSQLへ直接接続しない。
 
 ---
 
@@ -466,16 +477,30 @@ API ClientはNext.js Server上のAuthentication ContextからLaravel用Credentia
 概念的には以下とする。
 
 ```text
-Auth.js Session
+Better Auth Session Cookie
       ↓
 Next.js Server
       ↓
-Laravel Credential
+Better Auth Session確認
+      ↓
+Backend Credential取得
+      ↓
+Sanctum Token復号
       ↓
 API Client
       ↓
 Laravel API
 ```
+
+Better Auth SessionとBackend CredentialはRedisで管理する。
+
+Backend CredentialはApplication Level Encryptionして保存する。
+
+API ClientはBetter Auth SessionやRedisの内部実装へ直接依存せず、
+Authentication Contextを通して必要なCredentialを取得する。
+
+Sessionが無効な場合やBackend Credentialを取得できない場合は、
+Laravel APIへAuthenticated Requestを送信しない。
 
 Tokenの具体的な保存・取得方法は`08_認証・認可.md`で定義する。
 

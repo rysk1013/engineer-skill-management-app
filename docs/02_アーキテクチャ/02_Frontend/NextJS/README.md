@@ -8,7 +8,7 @@ Next.jsは画面とBFFを担当し、Business Rule、最終的な認可とValida
 
 ```text
 Browser
-   │ Auth.js Session
+   │ Better Auth Session
    ▼
 Next.js Frontend / BFF
    │ OpenAPI Generated Client / Sanctum Token
@@ -20,9 +20,11 @@ PostgreSQL
 ```
 
 - BrowserからLaravel APIを直接呼び出さず、Next.js BFFを経由します。
-- Next.jsはUI Rendering、Routing、Layout、Session、Frontend向けのデータ変換と処理の調整を担当します。
+- Next.jsはUI Rendering、Routing、Layout、Better Auth Session、Frontend向けのデータ変換と処理の調整を担当します。
+- Application User AuthenticationはLaravel Backendが担当します。
 - LaravelはBusiness Correctness、Authorization、Business Invariantを保証します。
 - Sanctum TokenはServer-sideのみで扱い、Browserへ公開しません。
+- Next.jsからPostgreSQLへ直接接続しません。
 - Laravel APIの契約はOpenAPIをSource of Truthとします。
 
 ## 採用Architecture
@@ -66,7 +68,7 @@ FrontendはFeature-oriented、BackendはDomain-orientedとして設計します�
 | 05 | [データ取得・更新](./05_データ取得・更新.md) | Server Query、Server Action、Route Handlerの処理経路 |
 | 06 | [API Client・OpenAPI](./06_API%20Client・OpenAPI.md) | API契約、生成Client、手書きAdapter、DTOとMapper |
 | 07 | [状態管理](./07_状態管理.md) | Server、URL、Form、Local UI、Contextの使い分け |
-| 08 | [認証・認可](./08_認証・認可.md) | Auth.js Session、Sanctum Token、FrontendとBackendの認可境界 |
+| 08 | [認証・認可](./08_認証・認可.md) | Better Auth Session、Backend Credential、Sanctum Token、FrontendとBackendの認可境界 |
 | 09 | [フォーム・Validation](./09_フォーム・Validation.md) | Form Model、Schema、入力補助、Server側の再Validation |
 | 10 | [エラーハンドリング](./10_エラーハンドリング.md) | Errorの正規化、HTTP Status、Error UI、Error Boundary |
 | 11 | [キャッシュ戦略](./11_キャッシュ戦略.md) | Dynamic Data、Cache Scope、更新後のInvalidation |
@@ -121,7 +123,7 @@ Revalidation
 | State | Server → URL → Form → Local → Context → Globalの順で配置を検討する |
 | URL State | 検索、Filter、Sort、PaginationをURLで管理する |
 | Form／Local UI State | Form Scopeまたは最も近いClient Componentへ閉じ込める |
-| Authentication State | Auth.js Sessionを基準とし、独自Storeへ複製しない |
+| Authentication State | Better Auth Sessionを基準とし、独自Storeへ複製しない |
 | Validation | Frontendは入力補助、Server Actionは入力の再検証、LaravelはAPI入力とBusiness Invariantの保証を担当する |
 | Error | Expected／Unexpected Errorを分離し、HTTP Statusの意味を維持してUIへ反映する |
 | Cache | Dynamic／Fresh Dataを基本とし、必要なデータだけOpt-inでCacheする |

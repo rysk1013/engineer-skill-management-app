@@ -9,7 +9,7 @@ Frontend Architectureでは、次の点を重視する。
 - Next.js App Routerとの親和性
 - Server Componentを活用したシンプルなデータ取得
 - BrowserとLaravel APIの責務境界の明確化
-- Auth.jsとLaravel Sanctumを組み合わせた認証境界の分離
+- Better AuthとLaravel Sanctumを組み合わせた認証境界の分離
 - Feature単位で変更しやすい構造
 - BackendのDomain Logicとの責務重複を避ける
 - OpenAPI FirstによるAPI型安全性
@@ -47,7 +47,7 @@ OpenAPI Generated Client
 │                                            │
 └───────────────────┬────────────────────────┘
                     │
-          Auth.js Session Cookie
+         Better Auth Session Cookie
                     │
                     ▼
 ┌────────────────────────────────────────────┐
@@ -72,29 +72,52 @@ OpenAPI Generated Client
 │ API Client                                 │
 │ - OpenAPI Generated Client                 │
 │                                            │
-│ Auth.js                                    │
+│ Better Auth                                │
 │ - Browser Session                          │
 │                                            │
-└───────────────────┬────────────────────────┘
-                    │
-              Sanctum Token
-                    │
-                    ▼
+│ Backend Credential Management              │
+│ - Sanctum Token Encryption / Decryption    │
+│                                            │
+└────────────┬──────────────┬────────────────┘
+             │              │
+             │              │ Sanctum Token
+             │              ▼
+             │    ┌────────────────────────────┐
+             │    │ Laravel API                │
+             │    │                            │
+             │    │ Presentation               │
+             │    │      ↓                     │
+             │    │ Application                │
+             │    │      ↓                     │
+             │    │ Domain                     │
+             │    │                            │
+             │    │ Infrastructure             │
+             │    └─────────────┬──────────────┘
+             │                  │
+             │                  ▼
+             │             PostgreSQL
+             │
+             │ Session / Credential
+             ▼
 ┌────────────────────────────────────────────┐
-│ Laravel API                                │
+│ Redis                                      │
 │                                            │
-│ Presentation                               │
-│      ↓                                     │
-│ Application                                │
-│      ↓                                     │
-│ Domain                                     │
+│ better-auth:*                              │
+│ - Better Auth Session                      │
 │                                            │
-│ Infrastructure                             │
-└───────────────────┬────────────────────────┘
-                    │
-                    ▼
-               PostgreSQL
+│ backend-credential:*                       │
+│ - Encrypted Sanctum Token                  │
+│                                            │
+└────────────────────────────────────────────┘
 ```
+
+Application User AuthenticationはLaravel APIが担当する。
+
+Better Auth SessionとBackend CredentialはRedisで管理する。
+
+Next.jsからPostgreSQLへ直接接続しない。
+
+RedisはMVPで1 Instanceを使用し、NamespaceとACLによってSessionとCredentialのAccess権限を分離する。
 
 ---
 
@@ -108,7 +131,8 @@ Next.jsはFrontendとBFFの両方を担当する。
 Next.js
 ├─ UI Rendering
 ├─ Routing
-├─ Auth.js Session管理
+├─ Better Auth Session管理
+├─ Backend Credential管理
 ├─ BFF
 ├─ Laravel API通信
 ├─ Frontend固有のデータ変換
@@ -121,7 +145,9 @@ Next.js
 - 画面描画
 - Routing / Layout
 - ユーザー操作の受付
-- Auth.jsによるログインセッション管理
+- Better AuthによるBrowser Session管理
+- RedisによるBetter Auth Session管理
+- Backend Credentialの暗号化・保存・取得・削除
 - Laravel API呼び出し
 - BrowserへLaravel API用Credentialを露出させない
 - APIレスポンスからView向けデータへの軽量な変換
@@ -203,7 +229,7 @@ Laravel API
 ```text
 Browser
    │
-   │ Auth.js Session
+   │ Better Auth Session Cookie
    ▼
 Next.js
    │
@@ -217,12 +243,18 @@ Laravel API
 ### Browser ↔ Next.js
 
 ```text
-Auth.js Session
+Better Auth Session
 ```
 
 を使用する。
 
-BrowserはAuth.js Session Cookieを利用し、Laravel API用Tokenを保持しない。
+BrowserはBetter Auth Session Cookieを利用し、Laravel API用Tokenを保持しない。
+
+Better Auth Sessionの保存先はRedisとする。
+
+Application User AuthenticationはLaravelが担当する。
+
+Laravelでの認証成功後にBetter Auth Sessionを成立させる具体方式は、Better Authの公式APIとExtension Pointを確認して決定する。
 
 ### Next.js ↔ Laravel
 
@@ -233,6 +265,14 @@ Laravel Sanctum Token
 を利用する。
 
 Sanctum TokenはNext.js Server側で管理する。
+
+Backend CredentialはBetter Auth Sessionとは分離してRedisへ保存する。
+
+Sanctum TokenはApplication Level Encryptionして保存する。
+
+Next.jsからPostgreSQLへ直接接続しない。
+
+Application User Authenticationと業務上の最終AuthorizationはLaravelが担当する。
 
 ---
 
@@ -853,8 +893,13 @@ Frontend Architectureの全体方針として、以下を正式採用する。
 - BrowserからLaravel APIへの直接アクセスは禁止する
 - Server ComponentからLaravel APIへの直接アクセスを許可する
 - ClientからLaravel APIへアクセスする場合はNext.js Server Boundaryを経由する
-- Browser ↔ Next.jsはAuth.js Sessionを使用する
+- Browser ↔ Next.jsはBetter Auth Sessionを使用する
+- Better Auth Sessionの保存先はRedisとする
+- Backend CredentialはBetter Auth Sessionと分離してRedisへ暗号化保存する
+- RedisはMVPで1 Instanceとし、NamespaceとACLでAccess権限を分離する
+- Application User AuthenticationはLaravelが担当する
 - Next.js ↔ LaravelはLaravel Sanctum Tokenを使用する
+- Next.jsからPostgreSQLへ直接接続しない
 - Frontend内部はFeature-based Architectureとする
 - `app/`はRouting / Layout / Compositionを中心とする
 - Business RuleはLaravel Domainを正とする
