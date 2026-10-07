@@ -851,7 +851,8 @@ Secrets
 
 - Database Password
 - Laravel `APP_KEY`
-- Auth.js Secret
+- Better Auth Secret
+- Backend Credential暗号化用Secret
 - API Credential
 - Deployment Credential
 - Cloud Credential
