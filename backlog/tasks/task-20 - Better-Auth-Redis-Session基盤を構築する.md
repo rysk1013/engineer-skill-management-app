@@ -1,10 +1,10 @@
 ---
 id: TASK-20
 title: Better Auth / Redis Session基盤を構築する
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-10-06 12:17'
-updated_date: '2026-10-07 08:34'
+updated_date: '2026-10-08 14:45'
 labels:
   - phase-2
   - frontend
