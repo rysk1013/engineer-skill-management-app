@@ -24,6 +24,9 @@ services:
       BACKEND_API_URL: ${BACKEND_API_URL}
     networks:
       - frontend
+    depends_on:
+      redis:
+        condition: service_healthy
 
   nginx:
     build:
@@ -75,6 +78,28 @@ services:
       retries: 5
       start_period: 10s
 
+  redis:
+    image: redis:8.2.10-bookworm
+    environment:
+      REDIS_BETTER_AUTH_PASSWORD: ${REDIS_BETTER_AUTH_PASSWORD}
+      REDIS_BACKEND_CREDENTIAL_PASSWORD: ${REDIS_BACKEND_CREDENTIAL_PASSWORD}
+    volumes:
+      - ./docker/redis/redis.conf:/etc/redis/redis.conf:ro
+      - ./docker/redis/docker-entrypoint.sh:/usr/local/bin/redis-entrypoint.sh:ro
+      - redis_data:/data
+    networks:
+      - frontend
+    entrypoint:
+      - /usr/local/bin/redis-entrypoint.sh
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - test "$$(redis-cli --user better-auth --pass "$$REDIS_BETTER_AUTH_PASSWORD" --no-auth-warning PING)" = "PONG"
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
   test-db:
     image: postgres:17-bookworm
     environment:
@@ -97,6 +122,7 @@ volumes:
   frontend_node_modules:
   backend_vendor:
   postgres_data:
+  redis_data:
 
 networks:
   frontend:
