@@ -21,8 +21,8 @@ backend_credential_password_hash="$(
 
 cat >"$ACL_FILE" <<EOF
 user default off
-user better-auth on #${better_auth_password_hash} ~better-auth:* +get +set +del +expire +pexpire +ttl +pttl
-user backend-credential on #${backend_credential_password_hash} ~backend-credential:* +get +set +del +expire +pexpire +ttl +pttl
+user better-auth on #${better_auth_password_hash} ~better-auth:* +get +set +del +expire +pexpire +ttl +pttl +ping
+user backend-credential on #${backend_credential_password_hash} ~backend-credential:* +get +set +del +expire +pexpire +ttl +pttl +ping
 EOF
 
 chmod 600 "$ACL_FILE"

@@ -97,7 +97,7 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - redis-cli --user better-auth --pass "$$REDIS_BETTER_AUTH_PASSWORD" ping
+        - test "$$(redis-cli --user better-auth --pass "$$REDIS_BETTER_AUTH_PASSWORD" --no-auth-warning PING)" = "PONG"
       interval: 5s
       timeout: 5s
       retries: 5
